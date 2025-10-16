@@ -1,0 +1,41 @@
+@import "../../global";
+
+.mainContainer {
+    width: max-content;
+    position: relative;
+
+    // Outside Click Div
+    .outsideClick {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: $offBlack;
+        opacity: 0.15;
+    }
+
+    // Field
+    .inputOverride {
+        background-color: $offWhite !important;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    // Date Picker
+    .datePicker {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translate(-50%, 100%);
+        border-radius: $tinyBorderRadius;
+        border: solid $tinyBorderWidth $offBlack;
+        overflow: hidden;
+
+        // Move prev/next month buttons inwards
+        & > div:nth-child(2) {
+            width: 80%;
+            margin: auto;
+        }
+    }
+}

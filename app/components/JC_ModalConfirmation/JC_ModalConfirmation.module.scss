@@ -1,0 +1,49 @@
+@import "../../global";
+
+$topBottomPadding: 26px;
+
+.modalContentHidden {
+    visibility: hidden;
+}
+
+// Modal
+.modalOverride {
+    .loadingSpinner {
+        position: absolute;
+        left: 0;
+        top: 60%;
+        transform: translateY(-50%);
+    }
+
+    // Main Text
+    .mainText {
+        width: 100%;
+        text-align: center;
+        line-height: 24px;
+        font-size: 18px;
+    }
+
+    // Buttons Container
+    .buttonsContainer {
+        margin-top: 24px;
+        display: flex;
+        justify-content: center;
+        gap: 25px;
+        .submitButton {
+            display: inherit;
+        }
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $teenyTinyScreenSize) {
+    .modalOverride {
+        .buttonsContainer {
+            flex-direction: column;
+            align-items: center;
+            row-gap: 25px;
+            column-gap: 0;
+        }
+    }
+}

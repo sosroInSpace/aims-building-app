@@ -1,0 +1,54 @@
+@import "../../global";
+
+.mainContainer {
+    // Buttons Container
+    .buttonsContainer {
+        display: flex;
+        column-gap: 10px;
+
+        // Toggle Button
+        .toggleButton {
+            height: 38px;
+            min-width: 120px;
+            padding: 0 15px;
+            outline: solid $tinyBorderWidth $offBlack;
+            border-radius: $tinyBorderRadius;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            user-select: none;
+            cursor: pointer;
+
+            &:hover {
+                outline-width: $smallBorderWidth;
+                transition: outline-width 0.1s ease-in-out;
+            }
+
+            &.selected {
+                background-color: $primaryColor;
+                color: $white;
+                outline-width: $tinyBorderWidth;
+                outline-color: $offBlack;
+            }
+        }
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $tinyScreenSize) {
+    .toggleButton {
+        height: 34px !important;
+        min-width: 100px !important;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: $teenyTinyScreenSize) {
+    .toggleButton {
+        height: 31px !important;
+        min-width: 80px !important;
+        font-size: 13px;
+    }
+}

@@ -1,0 +1,90 @@
+@import "../global";
+
+.mainContainer {
+    @include mainPageStyles;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    height: min-content;
+    column-gap: 90px;
+
+    // Form
+    .formContainer {
+        .feedbackText {
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        .submitButton {
+            margin-top: 40px;
+        }
+    }
+
+    // Info
+    .infoContainer {
+        width: max-content;
+        display: flex;
+        flex-direction: column;
+        row-gap: 60px;
+        text-align: center;
+        font-weight: bold;
+        letter-spacing: 1px;
+        color: $primaryColor;
+
+        // Name
+        .infoName {
+            font-size: 40px;
+            animation-name: errorFadeOutAnimation;
+            animation-duration: 4s;
+        }
+
+        // Items
+        .infoItemContainer {
+            font-size: 24px;
+            > div:first-child {
+                color: $offBlack;
+            }
+        }
+    }
+}
+// Error Message
+.errorMessage {
+    font-size: 15px;
+    height: 20px;
+    opacity: 1;
+    animation-name: errorFadeOutAnimation;
+    animation-duration: 4s;
+}
+
+// Error Fade Out Animation
+@keyframes errorFadeOutAnimation {
+    0% {
+        background-color: orange !important;
+    }
+    70% {
+        background-color: orange !important;
+    }
+    100% {
+        background-color: green !important;
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $mediumScreenSize) {
+    .mainContainer {
+        justify-content: center;
+    }
+}
+
+@media (max-width: $smallScreenSize) {
+    .mainContainer {
+        flex-direction: column-reverse;
+        row-gap: 40px;
+        .infoContainer {
+            row-gap: 40px;
+        }
+    }
+}

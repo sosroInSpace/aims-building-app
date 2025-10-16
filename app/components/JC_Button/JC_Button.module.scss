@@ -1,0 +1,152 @@
+@import "../../global";
+
+.buttonContainer,
+.spinnerContainer {
+    height: 44px;
+    min-width: 140px;
+}
+
+.buttonContainer {
+    width: max-content;
+    padding: 0 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: $primaryColor;
+    border-radius: $largeBorderRadius;
+    font-weight: bold;
+    overflow: visible;
+    user-select: none;
+    cursor: pointer;
+
+    // Text
+    .buttonText {
+        width: max-content;
+        overflow: visible;
+        color: $offWhite;
+    }
+
+    // Hover
+    &:hover:not(.disabled) {
+        background-color: $secondaryColor !important;
+    }
+
+    // Selected
+    &.buttonSelected {
+        cursor: default !important;
+    }
+
+    // Icon
+    &.includeIcon {
+        column-gap: 8px;
+        justify-content: space-between;
+        .buttonIcon {
+            width: 20px;
+            height: auto;
+            margin-left: -3px;
+        }
+        .buttonText {
+            position: static;
+            transform: translate(0, 0);
+            flex-grow: 1;
+        }
+    }
+
+    // Icon Only
+    &.iconOnly {
+        min-width: 0;
+        padding: 0 15px;
+        border-radius: $tinyBorderRadius;
+        .buttonIcon {
+            margin-left: 0;
+        }
+    }
+
+    // Icon On Top
+    &.iconOnTop {
+        flex-direction: column;
+        padding: 5px 0;
+        height: max-content;
+        min-height: 82px;
+        row-gap: 5px;
+        justify-content: space-between;
+        .buttonText {
+            flex-grow: 0;
+        }
+        .buttonIcon {
+            margin-top: 2px;
+            height: 40px;
+            width: auto;
+            margin-left: 0;
+        }
+    }
+
+    // Secondary
+    &.secondary {
+        background-color: $primaryColor;
+        &:hover:not(.disabled) {
+            background-color: $primaryColor;
+        }
+    }
+
+    // Small
+    &.small {
+        min-width: 60px;
+        height: 34px;
+        padding: 0 14px;
+        font-size: 14px;
+    }
+
+    // Circular
+    &.circular {
+        min-width: 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 24px;
+
+        .buttonText {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    }
+
+    // Disabled
+    &.disabled {
+        opacity: 0.7;
+        cursor: inherit;
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $tinyScreenSize) {
+    .enableResponsive.buttonContainer {
+        min-width: 115px;
+        height: 36px;
+        font-size: 16px;
+
+        .buttonIcon {
+            width: 17px !important;
+        }
+    }
+}
+
+@media (max-width: $teenyTinyScreenSize) {
+    .enableResponsive.buttonContainer {
+        min-width: 95px;
+        height: 30px;
+        padding: 0 10px;
+        font-size: 13px;
+
+        .buttonIcon {
+            width: 13px !important;
+            margin-left: 0 !important;
+            margin-right: -2px !important;
+        }
+    }
+}

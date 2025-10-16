@@ -1,0 +1,51 @@
+@import "../../global";
+
+.spanEntireRow {
+    grid-column: 1 / -1;
+}
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    justify-items: center;
+    row-gap: 26px;
+    column-gap: 20px;
+    max-width: 100%;
+
+    // Error Message
+    .errorSpan {
+        color: $errorColor;
+        font-weight: bold;
+        margin: -2px 0 -16px 0;
+    }
+
+    .customNodeContainer {
+        position: relative;
+
+        .customNodeErrorSpan {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -16px;
+            width: max-content;
+            text-align: center;
+            color: $errorColor;
+            font-weight: bold;
+            font-size: 13px;
+        }
+    }
+
+    .submitButtonOverride {
+        margin-top: 10px;
+    }
+
+    .buttonRow {
+        display: flex;
+        gap: 25px;
+        margin-top: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+}

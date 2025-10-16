@@ -1,0 +1,123 @@
+@import "../../global";
+
+.mainContainer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    // Three Dots Button
+    .threeDotsButton {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 100;
+
+        &:hover {
+            opacity: 0.8;
+        }
+
+        .threeDotsIcon {
+            width: 4px;
+            height: 18px;
+        }
+    }
+
+    // Menu Items
+    .menuItems {
+        position: absolute;
+        top: 35px;
+        left: 10px;
+        width: max-content;
+        background-color: $offBlack;
+        border: 2px solid $primaryColor;
+        border-radius: $smallBorderRadius;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 10px;
+        transition:
+            opacity 0.3s ease,
+            visibility 0.3s ease,
+            transform 0.3s ease;
+        z-index: 99;
+        @include containerShadow;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        overflow: hidden;
+
+        &.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .menuItem {
+            color: $primaryColor;
+            padding: 10px 25px;
+            margin: 2px 0;
+            font-size: 16px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            width: 100%;
+            border-radius: $tinyBorderRadius;
+            box-sizing: border-box;
+            position: relative;
+            user-select: none;
+            cursor: pointer;
+
+            &:hover {
+                color: lighten($primaryColor, 10%);
+                background-color: rgba($primaryColor, 0.1);
+            }
+        }
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $smallScreenSize) {
+    .mainContainer {
+        .threeDotsButton {
+            width: 25px;
+            height: 25px;
+        }
+
+        .menuItems {
+            top: 35px;
+
+            .menuItem {
+                font-size: 14px;
+                padding: 8px 12px;
+            }
+        }
+    }
+}
+
+@media (max-width: $teenyTinyScreenSize) {
+    .mainContainer {
+        .threeDotsButton {
+            width: 22px;
+            height: 22px;
+        }
+
+        .menuItems {
+            top: 30px;
+            padding: 8px;
+            left: unset;
+            right: 0px;
+
+            .menuItem {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+        }
+    }
+}

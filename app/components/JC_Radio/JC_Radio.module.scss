@@ -1,0 +1,73 @@
+@import "../../global";
+
+$leftGap: 10px;
+
+.mainContainer {
+    width: max-content;
+    display: flex;
+    align-items: center;
+    column-gap: 12px;
+    user-select: none;
+    &.clickable {
+        &,
+        .radio,
+        label {
+            cursor: pointer !important;
+        }
+    }
+
+    &.disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    .radio {
+        width: 14px;
+        height: 14px;
+        outline: solid $tinyBorderWidth $offBlack;
+        border-radius: 50%;
+        position: relative;
+
+        .innerCheckedCircle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            background-color: $primaryColor;
+        }
+    }
+}
+
+.radioGroupContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+
+    .label {
+        margin-bottom: 6px;
+        padding-left: 10px;
+        text-align: left;
+        font-size: 15px;
+        font-weight: bold;
+
+        // Error Message
+        .errorSpan {
+            color: $errorColor;
+            font-weight: bold;
+            padding-left: 10px;
+            position: absolute;
+        }
+    }
+
+    .optionsContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 0 3px 5px;
+    }
+}

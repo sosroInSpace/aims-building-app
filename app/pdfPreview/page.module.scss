@@ -1,0 +1,45 @@
+@import "../global";
+
+.mainContainer {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.pdfPreviewContainer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.pdfContent {
+    // A4 width: 210mm, height extends to fit content
+    width: 210mm;
+    max-width: 210mm;
+    background: white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-radius: 0; // Remove border radius for more realistic PDF appearance
+    overflow: visible; // Allow content to flow naturally
+    margin: 0 auto;
+    min-height: max-content;
+
+    // Ensure proper scaling on smaller screens
+    @media (max-width: 768px) {
+        width: 95vw;
+        max-width: 95vw;
+    }
+}
+
+.noCustomerContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+    padding: 40px;
+    text-align: center;
+}

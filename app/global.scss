@@ -1,0 +1,262 @@
+// - VARIABLES - //
+
+// Colours
+$primaryColor: #031363;
+$secondaryColor: #539fc1;
+$miscellaneousColor1: #f0c31f;
+$miscellaneousColor2: #2db737;
+$white: #ffffff;
+$offWhite: #f8f8f8;
+$black: #000000;
+$offBlack: #303030;
+$darkGrey: #4e4e4e;
+$lightGrey: #ececec;
+$grey: #dedede;
+$errorColor: #be3d3d;
+$lightErrorColor: #de6c6c;
+$successColor: #4caf50;
+
+// Screen Sizes
+$teenyTinyScreenSize: 600px;
+$tinyScreenSize: 790px;
+$smallScreenSize: 1020px;
+$mediumScreenSize: 1360px;
+$largeScreenSize: 1500px;
+
+// Page
+$bodyLeftRightPadding: 30px;
+$bodyTopBottomPadding: 60px;
+$pageMaxWidth: 1400px;
+$emptyPageHeight: 500px;
+@mixin mainPageStyles {
+    margin: auto;
+    max-width: $pageMaxWidth;
+    min-height: 400px;
+    padding: $bodyTopBottomPadding $bodyLeftRightPadding;
+}
+
+// Borders
+$tinyBorderWidth: 2px;
+$smallBorderWidth: 3px;
+$largeBorderWidth: 4px;
+$tinyBorderRadius: 5px;
+$smallBorderRadius: 20px;
+$mediumBorderRadius: 25px;
+$largeBorderRadius: 30px;
+
+// Font
+$smallFontSize: 11px;
+$defaultFontSize: 16px;
+$titleFontSize: 56px;
+@mixin labelSmall {
+    font-size: 11px;
+    font-weight: bold;
+}
+@mixin labelLarge {
+    font-size: 13px;
+    font-weight: bold;
+}
+@mixin textOutline($width, $color) {
+    text-shadow:
+        (-$width) (-$width) 0 $color,
+        $width (-$width) 0 $color,
+        (-$width) $width 0 $color,
+        $width $width 0 $color;
+}
+
+// Loading text styling
+@mixin loadingText {
+    text-align: center;
+    color: $secondaryColor;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+// Images
+$smallImageWidth: 80px;
+$smallImageHeight: 62px;
+$charlotteOpacity: 0.85;
+
+// Dropdowns
+@mixin dropdownIcon {
+    width: 15%;
+    height: auto;
+    max-height: 60%;
+}
+@mixin dropdownOptionContainer {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    padding: 0 38px 0 10px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-content: flex-start;
+    align-items: center;
+    column-gap: 10px;
+    border-radius: 6px;
+    border: solid $tinyBorderWidth $secondaryColor;
+    background-color: $offWhite;
+    overflow: hidden;
+
+    .optionLabel {
+        flex-grow: 1;
+        font-size: 13px;
+        text-align: left !important;
+    }
+
+    .checkbox {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 10px;
+    }
+}
+@mixin dropdownDropdown {
+    position: absolute;
+    bottom: -4px;
+    transform: translateY(100%);
+    width: 100%;
+    max-height: 375px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-radius: 6px;
+    background: rgba(#d3d3d3, 1);
+    z-index: 80;
+    animation: extendHeightAnimation 0.2s ease-in-out;
+
+    .dropdownOption {
+        @include dropdownOptionContainer;
+        margin-bottom: 4px;
+        border-color: $primaryColor;
+        cursor: pointer;
+        &.selected {
+            background-color: $grey;
+            cursor: default;
+        }
+        &:hover {
+            background-color: $grey;
+        }
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+@keyframes extendHeightAnimation {
+    0% {
+        max-height: 0;
+        overflow: hidden;
+    }
+    100% {
+        max-height: 375px;
+        overflow: hidden;
+    }
+}
+
+// Outside Click Div
+@mixin outsideClickDiv {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: $offBlack;
+    z-index: 90;
+    opacity: 0.15;
+    transition: opacity 0.2s ease-out;
+}
+
+// Container Shadow
+@mixin containerShadow {
+    box-shadow: 0 0 8px 2px rgba($black, 0.85);
+}
+
+// Hide Scrollbar
+@mixin hideScrollBar {
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    & {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+}
+
+// - GLOBAL CLASSES - //
+
+.forceWhiteBackground {
+    background-color: white !important;
+}
+.forceOverflowHidden {
+    overflow: hidden !important;
+}
+.forceFullScreen {
+    min-width: 100vw;
+    min-height: 100vh;
+}
+.forceHidden {
+    display: none !important;
+}
+.forceOverflowYHidden {
+    overflow-y: hidden !important;
+}
+
+// - EXPORT - //
+
+:export {
+    primaryColor: $primaryColor;
+    secondaryColor: $secondaryColor;
+    offWhite: $offWhite;
+    offBlack: $offBlack;
+    errorColor: $errorColor;
+    successColor: $successColor;
+}
+
+// Global styles for react-swipeable-list delete and move buttons
+.swipeable-list-item__trailing-actions {
+    .deleteButton {
+        background-color: $errorColor !important;
+        color: white !important;
+        font-weight: bold !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 80px !important;
+        border: none !important;
+        border-radius: 0 !important;
+        cursor: pointer !important;
+    }
+}
+
+.swipeable-list-item__leading-actions {
+    .moveButton {
+        background-color: #007bff !important;
+        color: white !important;
+        font-weight: bold !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 80px !important;
+        border: none !important;
+        border-radius: 0 !important;
+        cursor: pointer !important;
+    }
+}
+
+// Alternative selectors for different versions of react-swipeable-list
+.swipe-action {
+    .deleteButton {
+        background-color: $errorColor !important;
+        color: white !important;
+    }
+
+    .moveButton {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+}

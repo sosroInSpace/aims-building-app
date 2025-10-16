@@ -1,0 +1,1055 @@
+@import "../../global";
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background-color: $offWhite;
+
+    // Modifier for using container height instead of viewport height
+    &.containerHeight {
+        height: 100%;
+    }
+}
+
+// Header Section
+.header {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: $white;
+    min-height: 40px;
+    gap: 20px;
+
+    .backButton {
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 0.7;
+        }
+
+        .backButtonIcon {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    .headerLabel {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
+        color: $primaryColor;
+    }
+}
+
+// Content Area Section
+.contentArea {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+
+    // Switched layout modifier
+    &.switched {
+        .fieldsPane {
+            order: 2;
+            .fieldsPaneHeader {
+                background-color: $secondaryColor;
+            }
+        }
+        .inputPane {
+            order: 1;
+            .inputPaneHeader {
+                background-color: $primaryColor;
+            }
+        }
+    }
+
+    // Fields Pane (Left/Right depending on switch)
+    .fieldsPane {
+        width: 230px;
+        min-width: 250px;
+        display: flex;
+        flex-direction: column;
+        background-color: $white;
+        overflow: hidden;
+        order: 1;
+
+        // Form List Layout Override
+        &.formListFieldsPane {
+            width: max-content !important;
+            flex-shrink: 1 !important;
+        }
+
+        .fieldsPaneHeader {
+            background-color: $primaryColor;
+            color: $white;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            border-bottom: 1px solid $lightGrey;
+            position: relative;
+
+            .customOrderCheckbox {
+                position: absolute;
+                top: 50%;
+                right: 15px;
+                transform: translateY(-50%);
+
+                // Override checkbox colors for dark background
+                :global(.mainContainer) {
+                    .checkbox {
+                        outline-color: $white;
+
+                        .innerCheckedSquare {
+                            background-color: $white;
+                        }
+                    }
+
+                    label {
+                        color: $white;
+                        font-size: 12px;
+                        font-weight: normal;
+                    }
+                }
+            }
+        }
+
+        // Regular Tiles Container
+        .tileContainer {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+
+            .tile {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                justify-content: center;
+                padding: 10px;
+                font-size: 12px;
+                cursor: pointer;
+                box-sizing: border-box;
+                user-select: none;
+
+                // Heading Tile Variant
+                &.headingTile {
+                    height: 40px;
+                    background-color: $lightGrey;
+                    font-weight: bold;
+                    color: $primaryColor;
+                    cursor: default;
+                    margin-top: 15px;
+                    justify-content: center;
+                    align-items: flex-start;
+
+                    &:first-child {
+                        margin-top: 0;
+                    }
+                }
+
+                // Field Tile Variant
+                &.fieldTile {
+                    background-color: transparent;
+                    color: $offBlack;
+                    align-items: flex-start;
+
+                    .fieldLabel {
+                        font-weight: 500;
+                        line-height: 1.2;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        width: 100%;
+                    }
+
+                    .fieldValue {
+                        font-size: 10px;
+                        color: $secondaryColor;
+                        margin-top: 2px;
+                        line-height: 1.1;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        width: 100%;
+
+                        &.selectedFieldValue {
+                            color: $offWhite;
+                        }
+                    }
+
+                    .fieldValueInput {
+                        font-size: 10px;
+                        color: $secondaryColor;
+                        margin-top: 2px;
+                        line-height: 1.1;
+                        width: 100%;
+                        border: none;
+                        outline: none;
+                        background: transparent;
+                        padding: 0;
+                        font-family: inherit;
+                        cursor: pointer;
+
+                        &.readOnlyInput {
+                            cursor: default !important;
+                        }
+                    }
+
+                    &:hover:not(.selectedTile) {
+                        background-color: $grey;
+                    }
+                }
+
+                // State Modifiers
+                &.errorTile {
+                    background-color: $lightErrorColor;
+                }
+                &.selectedTile {
+                    background-color: $secondaryColor;
+
+                    .fieldLabel {
+                        color: $white;
+                    }
+                    .fieldValueInput {
+                        font-size: 16px;
+                        cursor: text;
+                        background-color: $offWhite;
+                        &::placeholder {
+                            color: $white;
+                        }
+                    }
+                }
+                &.readOnlyTile {
+                    cursor: default !important;
+
+                    &:hover {
+                        background-color: transparent !important;
+                    }
+                }
+            }
+        }
+        // Form List Table Container
+        .formListTableContainer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+
+            .formListTable {
+                width: 100%;
+                border-collapse: collapse;
+                background-color: $white;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                table-layout: fixed;
+                user-select: none;
+
+                .formListHeader {
+                    background-color: $primaryColor;
+                    color: $white;
+                    padding: 12px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    text-align: center;
+                    border-bottom: 1px solid $lightGrey;
+                    min-width: 80px;
+                    max-width: 150px;
+                    box-sizing: border-box;
+                }
+
+                .formListRow {
+                    &:nth-child(even) {
+                        background-color: $offWhite;
+                    }
+                }
+
+                .formListCell {
+                    height: 60px;
+                    min-width: 80px;
+                    max-width: 150px;
+                    padding: 12px;
+                    border-bottom: 1px solid $lightGrey;
+                    vertical-align: middle;
+                    cursor: pointer;
+                    transition: background-color 0.2s ease;
+                    font-size: 10px;
+                    color: $secondaryColor;
+                    text-align: center;
+                    box-sizing: border-box;
+
+                    &:hover {
+                        background-color: $grey;
+                    }
+
+                    &.selectedFormListCell {
+                        background-color: $secondaryColor;
+                        color: $white;
+
+                        .formListInput,
+                        .formListSelect {
+                            color: $white;
+                            &::placeholder {
+                                color: $white;
+                            }
+                        }
+
+                        // Selected state styling for pencil icon in form list cells
+                        .optionEditIcon {
+                            &:hover {
+                                background-color: rgba(255, 255, 255, 0.2);
+                            }
+
+                            img {
+                                filter: brightness(0) invert(1);
+                                opacity: 0.8;
+                            }
+
+                            &:hover img {
+                                opacity: 1;
+                            }
+                        }
+                    }
+
+                    // Default styling for pencil icon in form list cells
+                    .optionEditIcon {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 3px;
+                        background-color: transparent;
+                        cursor: pointer;
+                        flex-shrink: 0;
+
+                        &:hover {
+                            background-color: rgba(0, 0, 0, 0.1);
+                        }
+
+                        img {
+                            opacity: 0.6;
+                        }
+
+                        &:hover img {
+                            opacity: 1;
+                        }
+                    }
+
+                    .formListInput,
+                    .formListSelect {
+                        width: 100%;
+                        border: none;
+                        outline: none;
+                        background: transparent;
+                        padding: 0;
+                        font-family: inherit;
+                        font-size: 10px;
+                        color: $secondaryColor;
+                        line-height: 1.1;
+                        cursor: pointer;
+
+                        &:focus {
+                            cursor: text;
+                            background-color: $offWhite;
+                        }
+
+                        &:read-only {
+                            background-color: transparent;
+                            color: $darkGrey;
+                        }
+
+                        &::placeholder {
+                            color: $secondaryColor;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Delete button styling for swipe action - use !important to override react-swipeable-list styles
+        .deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 80px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            text-decoration: none !important;
+            cursor: pointer !important;
+        }
+
+        // Additional selectors to ensure delete button styling works with react-swipeable-list
+        :global(.swipeable-list-item__trailing-actions) .deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+        }
+
+        :global(.swipeable-list-item__action) .deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+        }
+
+        // More specific selectors for react-swipeable-list v1.10.0
+        :global(.swipeable-list-item) :global(.swipeable-list-item__trailing-actions) .deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+        }
+
+        :global(.swipeable-list) :global(.swipeable-list-item) :global(.swipeable-list-item__trailing-actions) .deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+        }
+
+        // Target the SwipeAction component directly
+        :global(.swipeable-list-item__trailing-actions) :global(.swipe-action) .deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+        }
+
+        // Target any div with deleteButton class inside trailing actions
+        :global(.swipeable-list-item__trailing-actions) div.deleteButton {
+            background-color: $errorColor !important;
+            color: white !important;
+        }
+
+        // Move button styling for swipe action - use !important to override react-swipeable-list styles
+        .moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 80px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            text-decoration: none !important;
+            cursor: pointer !important;
+        }
+
+        // Additional selectors to ensure move button styling works with react-swipeable-list
+        :global(.swipeable-list-item__leading-actions) .moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        :global(.swipeable-list-item__action) .moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        // More specific selectors for react-swipeable-list v1.10.0
+        :global(.swipeable-list-item) :global(.swipeable-list-item__leading-actions) .moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        :global(.swipeable-list) :global(.swipeable-list-item) :global(.swipeable-list-item__leading-actions) .moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        // Target the SwipeAction component directly
+        :global(.swipeable-list-item__leading-actions) :global(.swipe-action) .moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        // Target any div with moveButton class inside leading actions
+        :global(.swipeable-list-item__leading-actions) div.moveButton {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        // Selected form list row styling for move mode
+        .selectedFormListRow {
+            background-color: $secondaryColor !important;
+            color: $white !important;
+
+            .formListCell {
+                background-color: $secondaryColor !important;
+                color: $white !important;
+            }
+        }
+    }
+
+    // Input Pane (Right/Left depending on switch)
+    .inputPane {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: $offWhite;
+        overflow: hidden;
+        order: 2;
+
+        // Form List Layout Override
+        &.formListInputPane {
+            flex-grow: 1 !important;
+            max-width: none !important;
+            min-width: 250px;
+        }
+
+        .inputPaneHeader {
+            background-color: $secondaryColor;
+            color: $white;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid $lightGrey;
+            text-align: center;
+            position: relative;
+
+            .inputPaneHeaderText {
+                width: 100%;
+            }
+
+            .addNewOptionButton {
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                background-color: $white;
+                color: $secondaryColor;
+                border: none;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background-color: $lightGrey;
+                    transform: translateY(-50%) scale(1.1);
+                }
+
+                &:active {
+                    transform: translateY(-50%) scale(0.95);
+                }
+            }
+        }
+
+        .fieldEditor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+
+            // Options search container styling (same as Customer page)
+            .optionsSearchContainer {
+                width: 100%;
+                box-sizing: border-box;
+                display: flex;
+                justify-content: center;
+                flex-shrink: 0;
+                border-bottom: 1px solid $lightGrey;
+                background-color: $white;
+            }
+
+            // Custom search field styling
+            .optionsSearchField {
+                width: 100%;
+            }
+
+            // Custom search input styling - override JC_Field's inputContainer
+            .optionsSearchInput {
+                width: 100% !important;
+                outline: none !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .optionsList {
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                flex: 1;
+
+                // Ensure SwipeableList takes full width and height
+                .swipeable-list {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .swipeable-list-item {
+                    width: 100%;
+                }
+
+                .optionTile {
+                    width: 100%;
+                    min-height: 55px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    justify-content: center;
+                    padding: 0px 10px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-sizing: border-box;
+                    user-select: none;
+                    background-color: transparent;
+                    color: $offBlack;
+                    align-items: flex-start;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
+                    &:hover:not(.selectedOption) {
+                        background-color: $grey;
+                    }
+                    &.selectedOption {
+                        background-color: $secondaryColor;
+                        color: $white;
+                        cursor: default;
+
+                        // Multi-select options should remain clickable even when selected
+                        &.multiSelectOption {
+                            cursor: pointer;
+                        }
+                    }
+
+                    &.disabledOption {
+                        opacity: 0.5;
+                        cursor: not-allowed !important;
+                        background-color: #f5f5f5;
+                        color: #999;
+
+                        &:hover {
+                            background-color: #f5f5f5 !important;
+                            color: #999 !important;
+                        }
+
+                        .optionTileContent {
+                            cursor: not-allowed !important;
+                        }
+                    }
+
+                    &.optionTileWithEdit {
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 8px;
+                        // padding: 8px 10px;
+
+                        .optionEditIcon {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 3px;
+                            background-color: transparent;
+                            cursor: pointer;
+                            flex-shrink: 0;
+
+                            &:hover {
+                                background-color: rgba(0, 0, 0, 0.1);
+                            }
+
+                            img {
+                                opacity: 0.6;
+                            }
+
+                            &:hover img {
+                                opacity: 1;
+                            }
+                        }
+
+                        .optionTileContent {
+                            flex: 1;
+                            cursor: pointer;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+
+                            .twoLineOptionContent {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 2px;
+
+                                .primaryLine {
+                                    font-weight: bold;
+                                    line-height: 1.2;
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                }
+
+                                .secondaryLine {
+                                    font-weight: normal;
+                                    line-height: 1.2;
+                                    opacity: 0.8;
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                }
+                            }
+                        }
+
+                        &.selectedOption .optionEditIcon {
+                            &:hover {
+                                background-color: rgba(255, 255, 255, 0.2);
+                            }
+
+                            img {
+                                filter: brightness(0) invert(1);
+                                opacity: 0.8;
+                            }
+
+                            &:hover img {
+                                opacity: 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .datePickerContainer {
+                width: max-content;
+                height: 320px;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                margin: auto;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .emptyState {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: $darkGrey;
+            font-style: italic;
+            font-size: 16px;
+        }
+
+        // Move controls container styling
+        .moveControlsContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 30px;
+
+            // Move button overrides
+            .moveUpButton,
+            .moveDownButton {
+                width: 140px;
+                height: 60px;
+
+                &:hover:not(.disabled) {
+                    background-color: #0056b3 !important;
+                }
+
+                &.disabled {
+                    background-color: #ccc !important;
+                    cursor: not-allowed !important;
+                }
+            }
+        }
+    }
+}
+
+// Footer Section
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: $white;
+    border-top: $smallBorderWidth solid $primaryColor;
+    min-height: 60px;
+    gap: 15px;
+
+    .leftFooterContainer,
+    .rightFooterContainer {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .rightFooterContainer .errorMessage {
+        color: $errorColor;
+        font-weight: bold;
+        font-size: 14px;
+    }
+}
+
+// Date Modal Styles
+.dateModalContent {
+    margin-top: -15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: $offWhite !important;
+
+    & > div {
+        background-color: $offWhite !important;
+    }
+
+    .dateModalButtons {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+// Text Field Modal Styles
+.textFieldModalContent {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 0;
+    align-items: center;
+
+    .textFieldModalButtons {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        gap: 25px;
+    }
+}
+
+// Option Edit Modal Styles
+.optionEditModalContent {
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+    max-height: calc(100vh - 200px); // Leave space for modal padding and buttons
+
+    .optionEditModalScrollableContent {
+        overflow-y: auto;
+        padding: 10px 0;
+        flex: 1;
+        min-height: 0; // Allow flex item to shrink
+    }
+
+    .optionEditModalButtons {
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-top: 20px;
+        gap: 25px;
+        flex-shrink: 0; // Keep buttons fixed at bottom
+    }
+}
+
+// Text Field Override Classes
+.textFieldOverride {
+    flex-grow: 1;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+
+    .textFieldInputOverride {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        outline: none !important;
+        border: none !important;
+        margin: 0 !important;
+        background-color: transparent !important;
+        border-radius: 0 !important;
+        box-sizing: border-box !important;
+
+        input,
+        textarea {
+            width: 100% !important;
+            height: 99% !important;
+            margin: 0 !important;
+            outline: none !important;
+            border: none !important;
+            background-color: transparent !important;
+            box-sizing: border-box !important;
+        }
+    }
+}
+
+// Responsive Design
+@media (max-width: $teenyTinyScreenSize) {
+    .contentArea {
+        flex-direction: column;
+
+        .fieldsPane {
+            width: 100%;
+            min-width: auto;
+            height: 300px;
+            border-right: none;
+            border-bottom: 1px solid $lightGrey;
+        }
+
+        .inputPane {
+            flex: none;
+            height: 400px;
+        }
+    }
+}
+
+// Manual Override Modal Multi-Select Styles
+.manualOverrideMultiSelectContainer {
+    .optionGroup {
+        margin-bottom: 32px; // Increased gap between options
+
+        &:last-child {
+            margin-bottom: 0; // Remove margin from last option
+        }
+
+        .optionHeader {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: $primaryColor;
+        }
+
+        .optionFields {
+            .fieldContainer {
+                margin-bottom: 12px;
+            }
+        }
+    }
+}
+
+// Information Textarea Override Styles
+.informationTextareaOverride {
+    width: 600px !important; // Make it wider
+    height: 250px !important; // Make it much taller
+    max-width: 90vw; // Responsive max width
+
+    textarea {
+        height: 100% !important;
+        resize: vertical; // Allow vertical resizing
+    }
+}
+
+// Name Field Override Styles (to match Information field width)
+.nameFieldOverride {
+    width: 600px !important; // Same width as Information field
+    max-width: 90vw; // Responsive max width
+    margin-bottom: 18px;
+}
+
+// ModelConstructor functionality styles
+.modelConstructorContainer {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid $lightGrey;
+    border-radius: $mediumBorderRadius;
+    background-color: $white;
+
+    .saveAsOptionContainer {
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: center;
+
+        .saveAsOptionButton {
+            background-color: $secondaryColor !important;
+            color: $white !important;
+            font-size: 14px !important;
+            padding: 8px 16px !important;
+        }
+    }
+
+    .modelConstructorOptions {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid $lightGrey;
+        border-radius: $smallBorderRadius;
+
+        .loadingContainer {
+            padding: 20px;
+            text-align: center;
+            color: $darkGrey;
+            font-style: italic;
+        }
+
+        .modelConstructorOption {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid $lightGrey;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            user-select: none;
+            width: 100%;
+
+            &:hover {
+                background-color: $lightGrey;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .optionText {
+                flex: 1;
+                font-size: 14px;
+                color: $darkGrey;
+
+                .twoLineOptionContent {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+
+                    .primaryLine {
+                        font-weight: bold;
+                        line-height: 1.2;
+                    }
+
+                    .secondaryLine {
+                        font-weight: normal;
+                        line-height: 1.2;
+                        opacity: 0.8;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Save as Option Modal styles
+.saveAsOptionModalContent {
+    width: 400px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    .saveAsOptionModalButtons {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+    }
+}

@@ -1,0 +1,22 @@
+import { JC_Utils_Business } from "@/app/Utils";
+import { GlobalSettingsModel } from "@/app/models/GlobalSettings";
+import { unstable_noStore } from "next/cache";
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+// Get all GlobalSettings
+export async function GET() {
+    try {
+        unstable_noStore();
+        const result = await JC_Utils_Business.sqlGetList(GlobalSettingsModel, undefined, {
+            PageSize: undefined,
+            PageIndex: undefined,
+            Sorts: [{ SortField: "Id", SortAsc: true }]
+        });
+        return NextResponse.json({ result }, { status: 200 });
+    } catch (error) {
+        console.log(error);
+        return NextResponse.json({ error }, { status: 500 });
+    }
+}

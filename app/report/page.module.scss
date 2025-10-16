@@ -1,0 +1,194 @@
+@import "../global";
+
+// - MAIN CONTAINER - //
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+
+    // Header
+    .header {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: $white;
+        min-height: 60px;
+        border-bottom: $smallBorderWidth solid $primaryColor;
+        gap: 20px;
+
+        .backButton {
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+
+            &:hover {
+                opacity: 0.7;
+            }
+
+            .backButtonIcon {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        .headerLabel {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: $primaryColor;
+        }
+    }
+}
+
+// - CONTENT SECTIONS - //
+
+.noCustomerContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    background-color: $offWhite;
+    gap: 20px;
+
+    // Header
+    .header {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: $white;
+        min-height: 60px;
+        border-bottom: $smallBorderWidth solid $primaryColor;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        .headerLabel {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: $primaryColor;
+        }
+    }
+}
+
+.pdfViewerArea {
+    width: 80%;
+    margin: 30px auto;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // border: $smallBorderWidth solid $primaryColor;
+    border-radius: $tinyBorderRadius;
+    overflow: hidden;
+    position: relative;
+}
+
+.waitingMessage {
+    color: $offBlack;
+    font-size: 18px;
+    text-align: center;
+    padding: 40px;
+}
+
+.generatingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: min-content;
+    height: min-content;
+    gap: 35px;
+}
+
+.generatingText {
+    @include loadingText;
+    white-space: nowrap;
+}
+
+.pdfViewer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: $white;
+}
+
+// - FOOTER - //
+
+.footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: $white;
+    border-top: $smallBorderWidth solid $primaryColor;
+    min-height: 60px;
+    gap: 15px;
+
+    .leftFooterContainer {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .rightFooterContainer {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $mediumScreenSize) {
+    .mainContainer {
+        height: 100vh;
+    }
+
+    .footer {
+        padding: 12px 18px;
+        gap: 12px;
+    }
+
+    .waitingMessage {
+        font-size: 16px;
+        padding: 30px;
+    }
+}
+
+@media (max-width: $smallScreenSize) {
+    .footer {
+        padding: 10px 15px;
+        flex-direction: column;
+        gap: 10px;
+
+        .leftFooterContainer,
+        .rightFooterContainer {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    .waitingMessage {
+        font-size: 16px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: $tinyScreenSize) {
+    .waitingMessage {
+        font-size: 14px;
+        padding: 15px;
+    }
+}

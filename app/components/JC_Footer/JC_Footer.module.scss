@@ -1,0 +1,119 @@
+@import "../../global";
+
+.mainContainer {
+    width: 100%;
+    background-color: $primaryColor;
+
+    .innerContainer {
+        margin: auto;
+        width: 100%;
+        max-width: 1100px;
+        height: 120px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .navButtons {
+            width: 50%;
+            min-height: 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 14px;
+            border-bottom: solid $smallBorderWidth $primaryColor;
+            .link {
+                &:hover {
+                    color: $primaryColor;
+                    text-shadow: 0px 0px 1px $primaryColor;
+                }
+            }
+        }
+
+        .rightContainer {
+            display: flex;
+            align-items: center;
+            column-gap: 40px;
+
+            .socialContainer {
+                display: flex;
+                column-gap: 20px;
+                .socialIcon {
+                    width: 40px;
+                    height: auto;
+                }
+            }
+
+            .casellaWebOverride {
+                margin-top: -8px;
+                margin-left: -5px;
+            }
+        }
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $mediumScreenSize) {
+    .mainContainer {
+        padding-top: 10px;
+        padding-bottom: 36px;
+
+        .innerContainer {
+            flex-direction: column;
+            row-gap: 26px;
+        }
+    }
+}
+
+@media (max-width: $smallScreenSize) {
+    .mainContainer {
+        .innerContainer {
+            .navButtons {
+                width: 65%;
+            }
+        }
+    }
+}
+
+@media (max-width: $tinyScreenSize) {
+    .mainContainer {
+        .innerContainer {
+            .navButtons {
+                font-size: 13px;
+                width: 80%;
+            }
+            .rightContainer {
+                width: 90%;
+                justify-content: space-evenly;
+                column-gap: 0;
+                .trademark {
+                    font-size: 13px;
+                }
+                .socialContainer {
+                    column-gap: 15px;
+                    .socialIcon {
+                        width: 32px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: $teenyTinyScreenSize) {
+    .mainContainer {
+        .innerContainer {
+            .navButtons {
+                font-size: 11px;
+            }
+            .rightContainer {
+                .trademark {
+                    font-size: 11px;
+                }
+                .socialContainer {
+                    column-gap: 10px;
+                }
+            }
+        }
+    }
+}

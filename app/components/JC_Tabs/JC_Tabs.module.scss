@@ -1,0 +1,72 @@
+@import "../../global";
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+
+    // Tabs Container
+    .tabsContainer {
+        margin: auto;
+        width: max-content;
+        display: flex;
+        column-gap: 22px;
+        flex-shrink: 0;
+
+        // Tab
+        .tab {
+            height: 38px;
+            width: 200px;
+            outline: solid $tinyBorderWidth $secondaryColor;
+            border-radius: $tinyBorderRadius;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            user-select: none;
+            cursor: pointer;
+            color: $secondaryColor;
+
+            &:hover {
+                outline-width: 3px;
+                outline-color: $secondaryColor;
+                outline-offset: -1px;
+            }
+
+            &.selected {
+                outline-width: 3px;
+                outline-color: $primaryColor !important;
+                outline-offset: -1px;
+            }
+        }
+    }
+
+    // Body
+    .tabBody {
+        margin-top: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-height: 0;
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $tinyScreenSize) {
+    .tab {
+        height: 34px !important;
+        width: 170px !important;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: $teenyTinyScreenSize) {
+    .tab {
+        height: 31px !important;
+        width: 155px !important;
+        font-size: 13px;
+    }
+}

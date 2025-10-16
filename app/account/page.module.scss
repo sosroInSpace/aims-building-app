@@ -1,0 +1,142 @@
+@import "../global";
+
+.mainContainer {
+    @include mainPageStyles;
+
+    // Account Details
+    .accountDetailsContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        row-gap: 20px;
+
+        .smallTextButton {
+            font-weight: bold;
+            user-select: none;
+            cursor: pointer;
+
+            &:hover {
+                color: $secondaryColor;
+            }
+        }
+
+        // Action Buttons Container
+        .actionButtonsContainer {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            row-gap: 15px;
+            padding: 20px;
+            background-color: $grey;
+            border-radius: $smallBorderRadius;
+        }
+    }
+
+    // Order History
+    .orderHistoryContainer {
+        width: 650px;
+        width: 558px;
+        display: flex;
+        flex-direction: column;
+        row-gap: 40px;
+
+        // No orders text
+        .noOrdersText {
+            text-align: center;
+            font-size: 56px;
+            font-size: 46px;
+            font-family: var(--title-font);
+            color: $offBlack;
+        }
+
+        // Order
+        $orderLrPadding: 20px;
+        .orderContainer {
+            width: 100%;
+            user-select: none;
+
+            // Date
+            .orderDate {
+                padding: 0 0 8px $orderLrPadding;
+                border-bottom: solid $smallBorderWidth $primaryColor;
+                font-size: 20px;
+                font-weight: bold;
+            }
+
+            // Header
+            .orderHeader {
+                margin-top: 10px;
+                padding: 0 $orderLrPadding;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+
+                &:hover {
+                    .chevronIcon {
+                        display: none;
+                    }
+                    .chevronIconHover {
+                        display: initial;
+                    }
+                }
+
+                // Image grid view
+                .imageGridViewOverride {
+                    width: 140px;
+                    height: 115px;
+                    border-radius: $tinyBorderRadius;
+                    overflow: hidden;
+                }
+
+                // Text
+                .headerBodyText {
+                    font-size: 22px;
+                    font-weight: bold;
+                }
+
+                // Cehvron
+                .chevronIcon,
+                .chevronIconHover {
+                    width: 28px;
+                    height: auto;
+                }
+                .chevronIconHover {
+                    display: none;
+                }
+            }
+
+            // Expanded
+            .orderExpanded {
+                margin-top: 25px;
+                padding: 0 $orderLrPadding;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                row-gap: 25px;
+            }
+        }
+    }
+}
+
+// On big screens, show columns and hide tabs
+.mainBig {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    justify-items: center;
+    justify-content: space-around;
+}
+.mainSmall {
+    display: none;
+}
+
+// On small screens, hide columns and show tabs
+@media (max-width: $mediumScreenSize) {
+    .mainBig {
+        display: none;
+    }
+    .mainSmall {
+        display: block;
+    }
+}

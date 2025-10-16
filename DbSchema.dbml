@@ -1,0 +1,408 @@
+
+// - User - //
+
+Table User {
+  Id                      UUID         [not null, PK]
+  FirstName               varchar(100) [not null]
+  LastName                varchar(100) [    null]
+  Email                   varchar(100) [not null]
+  PasswordHash            varchar      [not null]
+  LoginFailedAttempts     int          [not null, default: 0]
+  LoginLockoutDate        timestamp    [    null]
+  ChangePasswordToken     varchar(200) [    null]
+  ChangePasswordTokenDate timestamp    [    null]
+  Phone                   varchar(20)  [    null]
+  EmployeeOfUserId        UUID         [    null, ref: > User.Id, note: 'If set then this user is an employee of the user specified by this ID.']
+  CompanyName             varchar(200) [    null,                 note: 'Required field for wholesale users.']
+  ABN                     varchar(20)  [    null,                 note: 'Australian Business Number.']
+  Qualification           varchar(200) [    null,                 note: 'Just free text.']
+  IsEmailSubscribed       boolean      [not null, default: TRUE]
+  IsDiscountUser          boolean      [not null, default: FALSE, note: 'Discount amount set in [GlobalSettings].']
+  StripeCustomerId        varchar(100) [    null,                 note: 'Set when user makes payment for first time since their Stripe customer account is created.']
+  LogoFileId              UUID         [    null, ref: > File.Id, note: 'User logo image file ID.']
+  IsVerified              boolean      [not null, default: FALSE]
+  VerificationToken       varchar(200) [    null]
+  Enable2fa               boolean      [not null, default: FALSE, note: 'Whether 2FA is enabled for this user.']
+  TwoFactorCode           varchar(10)  [    null,                 note: 'Current 2FA verification code.']
+  TwoFactorCodeExpiry     timestamp    [    null,                 note: 'Expiry time for the current 2FA code.']
+  ReportTypeListJson      text         [    null,                 note: 'JSON array of O_ReportType codes that can be selected for a user.']
+  CreatedAt               timestamp    [not null, default: 'now()']
+  ModifiedAt              timestamp    [    null]
+  Deleted                 boolean      [not null, default: FALSE]
+}
+
+Table UserPersistedData {
+    Id     UUID         [not null, PK]
+    UserId UUID         [not null, ref: > User.Id]
+    Code   varchar(50)  [not null, PK]
+    Value  varchar(200) [not null]
+}
+
+
+// - Customer - //
+
+Table Customer {
+    Id                           UUID         [not null, PK]
+    UserId                       UUID         [not null, ref: > User.Id]
+    ReportTypeCode               varchar(50)  [    null, ref: > O_ReportType.Code]
+    ClientName                   varchar(200) [not null]
+    ClientPhone                  varchar(20)  [    null]
+    ClientEmail                  varchar(100) [    null]
+    ClientPrincipalName          varchar(200) [    null]
+    MainImageFileId              UUID         [    null]
+    Address                      varchar(200) [not null]
+    PostalAddress                varchar(200) [not null]
+    InspectionDate               timestamp    [    null]
+    InspectorName                varchar(200) [not null]
+    InspectorPhone               varchar(20)  [    null]
+    InspectorQualification       varchar(200) [    null]
+    BuildingTypeListJson         varchar      [    null]
+    CompanyStrataTitle           varchar(200) [    null]
+    NumBedroomsListJson          varchar      [    null, note: 'JSON array of bedroom codes.']
+    OrientationListJson          varchar      [    null, note: 'JSON array of orientation codes.']
+    StoreysListJson              varchar      [    null, note: 'JSON array of storey codes.']
+    FurnishedListJson            varchar      [    null, note: 'JSON array of furnished codes.']
+    OccupiedListJson             varchar      [    null, note: 'JSON array of occupied codes.']
+    FloorListJson                varchar      [    null, note: 'JSON array of floor codes.']
+    OtherBuildingElementsListJson varchar     [    null, note: 'JSON array of other building element codes.']
+    OtherTimberBldgElementsListJson varchar   [    null, note: 'JSON array of other timber building element codes.']
+    RoofListJson                 varchar      [    null, note: 'JSON array of roof codes.']
+    WallsListJson                varchar      [    null, note: 'JSON array of wall codes.']
+    WeatherListJson              varchar      [    null, note: 'JSON array of weather codes.']
+    RoomsListJson                varchar      [    null, note: 'JSON array of room codes.']
+    Summary                      varchar      [    null]
+    SpecialConditions            varchar      [    null]
+    OverallConditionListJson     varchar      [    null, note: 'JSON array of overall condition codes.']
+    FutherInspectionsListJson    varchar      [    null]
+    ObstructionsListJson         varchar      [    null]
+    InaccessibleAreasListJson    varchar      [    null]
+    AreasInspectedListJson       varchar      [    null]
+    RiskOfUndetectedDefectsListJson varchar   [    null, note: 'JSON array of risk of undetected defects codes.']
+    CustomOrder                  boolean      [    null, note: 'Persists the "Custom Order" checkbox state for Defects page. NULL/TRUE = use SortOrder, FALSE = use default sort.']
+    SortOrder                    int          [not null, default: 999]
+    CreatedAt                    timestamp    [not null, default: 'now()']
+    ModifiedAt                   timestamp    [    null]
+    Deleted                      boolean      [not null, default: FALSE]
+}
+
+Table CustomerDefect {
+    Id                               UUID         [not null, PK]
+    CustomerId                       UUID         [not null, ref: > Customer.Id]
+    Name                             varchar      [    null]
+    BuildingListJson                 varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
+    AreaListJson                     varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
+    LocationListJson                 varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
+    OrientationCode                  varchar(50)  [    null, ref: > O_DefectOrientation.Code]
+    DefectFindingCode                varchar(50)  [    null, ref: > O_DefectFinding.Code]
+    DefectFindingNameOverride        varchar      [    null, note: 'Manual override for defect finding name.']
+    DefectFindingInformationOverride varchar      [    null, note: 'Manual override for defect finding information.']
+    SeverityListJson                 varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
+    SortOrder                        int          [not null, default: 999]
+    CreatedAt                        timestamp    [not null, default: 'now()']
+    ModifiedAt                       timestamp    [    null]
+    Deleted                          boolean      [not null, default: FALSE]
+}
+
+Table DefectImage {
+    Id          UUID         [not null, PK]
+    DefectId    UUID         [not null, ref: > CustomerDefect.Id]
+    ImageName   varchar(200) [not null]
+    ImageFileId UUID         [not null]
+    SortOrder   int          [not null, default: 999]
+    CreatedAt   timestamp    [not null, default: 'now()']
+    ModifiedAt  timestamp    [    null]
+    Deleted     boolean      [not null, default: FALSE]
+}
+
+Table Report {
+    Id         UUID         [not null, PK]
+    CustomerId UUID         [not null, ref: > Customer.Id]
+    UserId     UUID         [not null, ref: > User.Id]
+    Name       varchar(200) [not null]
+    FileId     UUID         [not null]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+
+// - File - //
+
+Table File {
+    Id             UUID         [not null, PK]
+    UserId         UUID         [not null, ref: > User.Id]
+    FileName       varchar(200) [not null]
+    StorageProvider varchar(20) [not null]
+    Bucket         varchar(200) [not null]
+    Key            varchar(500) [not null]
+    MimeType       varchar(100) [not null]
+    SizeBytes      int          [not null]
+    IsPublic       boolean      [not null, default: FALSE]
+    Notes          text         [    null]
+    CreatedAt      timestamp    [not null, default: 'now()']
+    ModifiedAt     timestamp    [    null]
+    Deleted        boolean      [not null, default: FALSE]
+}
+
+
+// - Options - //
+
+Table O_BuildingType {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_NumBedrooms {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Orientation {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_ReportType {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Storeys {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Furnished {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Occupied {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Floor {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_OtherBuildingElements {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_OtherTimberBldgElements {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Roof {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Walls {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Weather {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Location {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Building {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Area {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_DefectOrientation {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_DefectFinding {
+    Code        varchar(50)  [not null, PK]
+    Name        varchar(100) [not null]
+    Information varchar      [not null]
+    SortOrder   int          [not null, default: 999]
+    CreatedAt   timestamp    [not null, default: 'now()']
+    ModifiedAt  timestamp    [    null]
+    Deleted     boolean      [not null, default: FALSE]
+}
+
+Table O_Severity {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_OverallCondition {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_FurtherInspections {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Obstructions {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_InaccessibleAreas {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_AreasInspected {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_RiskOfUndetectedDefects {
+    Code       varchar(50)  [not null, PK]
+    Name       varchar(100) [not null]
+    SortOrder  int          [not null, default: 999]
+    CreatedAt  timestamp    [not null, default: 'now()']
+    ModifiedAt timestamp    [    null]
+    Deleted    boolean      [not null, default: FALSE]
+}
+
+Table O_Summary {
+    Code        varchar(50)  [not null, PK]
+    Name        varchar(100) [not null]
+    Description varchar      [    null]
+    SortOrder   int          [not null, default: 999]
+    CreatedAt   timestamp    [not null, default: 'now()']
+    ModifiedAt  timestamp    [    null]
+    Deleted     boolean      [not null, default: FALSE]
+}
+
+
+
+
+// - Contact - //
+
+Table Contact {
+  Id        UUID         [not null, PK]
+  UserId    UUID         [    null, ref: > User.Id, note: 'Nullable since user might not be logged in so just provide name.']
+  Name      varchar(200) [not null, note: 'If UserId not null then this will be the User record\'s FirstName+LastName, otherwise is whatever user inputs on "Contact" form.']
+  Email     varchar(100) [not null]
+  Phone     varchar(20)  [    null]
+  Message   varchar      [not null]
+  CreatedAt timestamp    [not null, default: 'now()']
+}
+
+
+// - Global Settings - //
+
+Table GlobalSettings {
+  Code        varchar(50)  [not null, PK]
+  Description varchar(200) [not null]
+  Value       varchar(200) [not null]
+}

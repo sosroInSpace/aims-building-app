@@ -1,0 +1,41 @@
+@import "./global";
+
+// Root
+.rootMainContainer {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-open-sans); // Font family used everywhere, can only set this if have "openSans.variable" in ts
+    background-color: $offWhite;
+
+    // Main layout container for header and content
+    .mainLayout {
+        display: flex;
+        flex-direction: row; // Header on left, content on right
+        flex-grow: 1;
+        height: 100%;
+        min-height: max-content;
+    }
+
+    // Every Page
+    .pageContainer {
+        flex-grow: 1;
+        position: relative;
+        box-sizing: border-box;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    // textarea
+    textarea {
+        font-family: var(--font-open-sans);
+    }
+
+    // a
+    a {
+        color: black;
+        text-decoration: none;
+    }
+}

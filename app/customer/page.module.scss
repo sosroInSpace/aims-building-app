@@ -1,0 +1,173 @@
+@import "../global";
+
+// This page uses JC_FormTablet component, so no specific styles needed
+// All styling is handled by the JC_FormTablet component
+
+// Reports container wrapper with position relative for addDocumentButton
+.reportsContainer {
+    position: relative;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+// Search container styling
+.searchContainer {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+// Custom search field styling
+.searchField {
+    width: 100%;
+}
+
+// Custom search input styling - override JC_Field's inputContainer
+.searchInput {
+    width: 100% !important;
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+// Reports list styling to match JC_FormTablet option tiles
+.reportsList {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.reportTile {
+    width: 100%;
+    min-height: 50px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px 0 15px;
+    font-size: 12px;
+    cursor: pointer;
+    background-color: transparent;
+    color: $offBlack;
+    box-sizing: border-box;
+    position: relative;
+
+    // Match JC_FormTablet field tile hover style exactly
+    &:hover:not(.loading):not(.selectedTile) {
+        background-color: $grey;
+    }
+
+    // Match JC_FormTablet field tile selected style exactly
+    &.selectedTile {
+        background-color: $secondaryColor;
+
+        .reportContent {
+            .reportAddress {
+                color: $white;
+            }
+
+            .reportDefects {
+                color: $white;
+            }
+        }
+
+        .modifiedContainer {
+            color: $white;
+        }
+    }
+
+    .loadingSpinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+    }
+
+    .reportContent {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        flex-grow: 1;
+        gap: 3px;
+
+        .reportAddress {
+            font-weight: bold;
+            color: $offBlack;
+            font-size: 12px;
+        }
+
+        .reportDefects {
+            color: red;
+            font-size: 8px;
+            font-weight: bold;
+        }
+    }
+
+    .modifiedContainer {
+        display: flex;
+        align-items: center;
+        font-size: 10px;
+        color: $offBlack;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
+.noReports {
+    padding: 20px;
+    text-align: center;
+    color: $secondaryColor;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.addDocumentButton {
+    position: absolute;
+    top: -33px;
+    right: 5px;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.8;
+    }
+
+    .documentImage {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .plusIcon {
+        position: absolute;
+        top: 20%;
+        left: -20%;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: $secondaryColor;
+        border: 1px solid $offWhite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: bold;
+        color: $white;
+        line-height: 1;
+    }
+}

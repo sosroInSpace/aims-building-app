@@ -1,0 +1,411 @@
+@import "../../global";
+
+$topBottomPadding: 26px;
+
+.blackOverlay {
+    z-index: 998;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: $offBlack;
+    opacity: 0.35;
+}
+
+.modalContainer {
+    z-index: 999;
+    width: 90vw;
+    max-width: 1200px;
+    height: 80vh;
+    padding: $topBottomPadding 30px;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: $offWhite;
+    border: 2px solid $primaryColor;
+    border-radius: $largeBorderRadius;
+    box-sizing: border-box;
+    @include containerShadow;
+    display: flex;
+    flex-direction: column;
+
+    .closeButton {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: background-color 0.2s ease;
+        z-index: 1000;
+
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        img {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        &:hover img {
+            opacity: 1;
+        }
+    }
+
+    .bodyContent {
+        color: $secondaryColor;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        .mainContent {
+            display: flex;
+            flex-direction: row;
+            height: 100%;
+            gap: 20px;
+
+            .selectedImagePane {
+                flex: 2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                position: relative;
+
+                .selectedImage {
+                    max-width: 100%;
+                    max-height: 100%;
+                    width: auto;
+                    height: auto;
+                    object-fit: contain;
+                }
+
+                .noImageSelected {
+                    color: $secondaryColor;
+                    font-size: 18px;
+                    opacity: 0.7;
+                }
+
+                .savingContainer {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 35px;
+
+                    .savingText {
+                        @include loadingText;
+                    }
+                }
+
+                .imageActions {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                    z-index: 10;
+
+                    .editButton,
+                    .deleteButton,
+                    .moveUpButton,
+                    .moveDownButton {
+                        width: 40px;
+                        height: 40px;
+                        border: none;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 20px;
+                        font-weight: bold;
+                        transition: background-color 0.2s ease;
+                    }
+
+                    .editButton {
+                        background-color: $primaryColor;
+                        color: white;
+
+                        &:hover {
+                            background-color: darken($primaryColor, 10%);
+                        }
+                    }
+
+                    .deleteButton {
+                        background-color: #dc3545;
+                        color: white;
+
+                        &:hover {
+                            background-color: #c82333;
+                        }
+
+                        &:disabled {
+                            background-color: #6c757d;
+                            cursor: not-allowed;
+                        }
+                    }
+
+                    .moveUpButton {
+                        background-color: $secondaryColor;
+                        color: white;
+
+                        &:hover {
+                            background-color: darken($secondaryColor, 10%);
+                        }
+
+                        &:disabled {
+                            background-color: #6c757d;
+                            cursor: not-allowed;
+                        }
+
+                        .upArrow {
+                            transform: rotate(90deg); // Rotate left arrow to point up
+                        }
+                    }
+
+                    .moveDownButton {
+                        background-color: $secondaryColor;
+                        color: white;
+
+                        &:hover {
+                            background-color: darken($secondaryColor, 10%);
+                        }
+
+                        &:disabled {
+                            background-color: #6c757d;
+                            cursor: not-allowed;
+                        }
+
+                        .downArrow {
+                            transform: rotate(-90deg); // Rotate left arrow to point down
+                        }
+                    }
+                }
+
+                // Legacy support for standalone deleteButton (if still used elsewhere)
+                .deleteButton:not(.imageActions .deleteButton) {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    width: 40px;
+                    height: 40px;
+                    background-color: #dc3545;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: background-color 0.2s ease;
+                    z-index: 10;
+
+                    &:hover {
+                        background-color: #c82333;
+                    }
+
+                    &:disabled {
+                        background-color: #6c757d;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+
+            .imagesListPane {
+                max-width: 150px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                background-color: $offWhite;
+                min-height: 0; // Ensures flex child can shrink below content size
+
+                .imagesList {
+                    flex: 1;
+                    overflow-y: auto;
+                    overflow-x: hidden; // Prevent horizontal scroll
+                    padding: 3px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    min-height: 0; // Ensures flex child can shrink below content size
+
+                    .imageListItem {
+                        width: 100%;
+                        height: auto;
+                        min-height: 100px; // Fixed minimum height to prevent shrinking
+                        aspect-ratio: 5 / 4;
+                        flex-shrink: 0; // Prevent flex items from shrinking
+                        outline: 2px solid #ddd;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        background-color: white;
+                        overflow: hidden;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        &:hover {
+                            border-color: $primaryColor;
+                        }
+
+                        &.selected {
+                            outline-color: $primaryColor;
+                            outline-width: 3px;
+                        }
+
+                        &.notClickable {
+                            cursor: default;
+
+                            &:hover {
+                                border-color: #ddd;
+                            }
+                        }
+
+                        .listImage {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                        }
+
+                        .noImagePlaceholder {
+                            color: $secondaryColor;
+                            font-size: 12px;
+                            opacity: 0.7;
+                            text-align: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+
+        .footerLeft {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+
+            .galleryIconContainer {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                padding: 8px 12px;
+                border-radius: $smallBorderRadius;
+                transition: background-color 0.2s ease;
+
+                &:hover {
+                    background-color: #f0f0f0;
+                }
+
+                .galleryIcon {
+                    margin-top: -1px;
+                    margin-right: -2px;
+                    font-size: 24px;
+                    line-height: 1;
+                }
+
+                .galleryText {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: $secondaryColor;
+                }
+            }
+
+            .cameraIconContainer {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                padding: 8px 12px;
+                border-radius: $smallBorderRadius;
+                transition: background-color 0.2s ease;
+
+                &:hover {
+                    background-color: #f0f0f0;
+                }
+
+                .cameraIcon {
+                    margin-top: -9px;
+                    margin-right: -2px;
+                    font-size: 24px;
+                    line-height: 1;
+                }
+
+                .cameraText {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: $secondaryColor;
+                }
+            }
+        }
+
+        .footerRight {
+            display: flex;
+            align-items: center;
+        }
+    }
+}
+
+// - RESPONSIVE DESIGN - //
+@media (max-width: $smallScreenSize) {
+    .modalContainer {
+        width: calc(100vw - 40px);
+        height: calc(100vh - 40px);
+
+        .bodyContent .mainContent {
+            gap: 15px;
+
+            .selectedImagePane {
+                flex: 1;
+                min-height: 200px;
+            }
+
+            .imagesListPane {
+                flex: 0 0 150px;
+            }
+        }
+    }
+}
+
+@media (max-width: $tinyScreenSize) {
+    .modalContainer {
+        width: calc(100vw - 20px);
+        height: calc(100vh - 20px);
+        padding: 20px 15px;
+
+        .footer {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+    }
+}
+
+@media (max-width: $teenyTinyScreenSize) {
+    .modalContainer {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        padding: 15px 10px;
+    }
+}

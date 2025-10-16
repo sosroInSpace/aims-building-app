@@ -1,0 +1,25 @@
+@import "../../global";
+
+.mapContainer {
+    border-radius: $tinyBorderRadius;
+    border: solid $largeBorderWidth $offBlack;
+
+    & > div > div:last-child > div:nth-child(3) {
+        border: none !important;
+    }
+
+    .mapRefreshButton {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 30px;
+        height: auto;
+        padding: 4px;
+        border-radius: 50%;
+        cursor: pointer;
+
+        &:hover {
+            background-color: $secondaryColor;
+        }
+    }
+}

@@ -1,0 +1,13 @@
+@import "../global";
+
+.mainContainer {
+    @include mainPageStyles;
+
+    // Info Text
+    .infoText {
+        margin-bottom: 42px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+}

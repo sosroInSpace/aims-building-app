@@ -1,0 +1,196 @@
+@import "../../global";
+
+// Header
+.mainContainer {
+    width: max-content; // Fixed width for vertical sidebar
+    max-height: 100vh;
+    padding: 12px 0 0 0;
+    box-sizing: border-box;
+    background-color: $primaryColor;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; // Prevent shrinking
+
+    // Logo + Account
+    .logoAccountContainer {
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+
+        .logo {
+            width: 60px; // Smaller for vertical layout
+            height: auto;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+        }
+
+        // Checkout + Login/Register (used in 2 places)
+        .checkoutAccountContainer {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+
+            // Login/Register
+            .loginRegisterContainer {
+                width: max-content;
+                height: max-content;
+                cursor: pointer;
+
+                .loginRegisterText {
+                    padding: 8px 0;
+                    font-size: 18px;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                &:hover {
+                    color: $primaryColor;
+                }
+            }
+
+            &.tinyCheckoutAccount {
+                display: flex; // Show in vertical layout
+            }
+        }
+    }
+
+    // Navs
+    .navsContainer {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+        overflow-x: hidden; // Prevent horizontal scrollbar during animations
+
+        // Nav Buttons
+        .navButtons {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            align-items: center;
+        }
+    }
+
+    // Custom Nav Button Styles
+    .navButton {
+        width: 100%;
+        width: 90px;
+        height: 90px;
+        background-color: transparent;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-color: $primaryColor;
+        }
+
+        .navButtonContent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+
+            .navIcon {
+                width: 24px;
+                height: 24px;
+                opacity: 0.9;
+                transition: opacity 0.3s ease;
+                filter: brightness(0) saturate(100%) invert(58%) sepia(36%) saturate(1234%) hue-rotate(169deg) brightness(95%) contrast(85%);
+            }
+
+            .navLabel {
+                font-size: 14px;
+                font-weight: 500;
+                text-align: center;
+                line-height: 1.2;
+                color: $secondaryColor;
+            }
+        }
+
+        &:hover .navButtonContent .navIcon {
+            opacity: 1;
+        }
+
+        // Active state when on current page
+        &.active {
+            background-color: $secondaryColor;
+            cursor: default;
+            pointer-events: none;
+
+            &:hover {
+                background-color: $secondaryColor;
+                border-color: transparent;
+                transform: none;
+            }
+
+            .navButtonContent {
+                .navIcon {
+                    opacity: 1;
+                    filter: brightness(0) saturate(100%) invert(100%); // White color
+                }
+
+                .navLabel {
+                    color: $white;
+                }
+            }
+        }
+    }
+
+    // Animation for customer selection
+    :global(.animate-glow) {
+        animation: glowScale 0.4s ease-out;
+        position: relative;
+    }
+
+    :global(.animate-glow::before) {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 25%, transparent 50%);
+        border-radius: inherit;
+        opacity: 0;
+        animation: glowFade 0.4s ease-out;
+    }
+
+    @keyframes glowScale {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @keyframes glowFade {
+        0% {
+            opacity: 0;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+}

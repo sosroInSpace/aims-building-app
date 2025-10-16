@@ -1,0 +1,75 @@
+@import "../global";
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    background-color: $offWhite;
+    gap: 20px;
+}
+
+.noCustomerContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    background-color: $offWhite;
+    gap: 20px;
+}
+
+.defectsPageContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background-color: $offWhite;
+}
+
+.formTabletWrapper {
+    flex: 1;
+    min-height: 0; // Allow shrinking below content size
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.addButtonContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    height: 60px;
+    background-color: $primaryColor;
+    padding: 0 20px;
+    box-sizing: border-box;
+
+    .addButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+        min-height: 30px;
+        background-color: $secondaryColor;
+        color: $white;
+        border: none;
+        border-radius: 50%;
+        font-size: 22px;
+        font-weight: bold;
+        box-sizing: border-box;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 0.8;
+        }
+
+        &:active {
+            opacity: 0.6;
+        }
+    }
+}

@@ -1,0 +1,74 @@
+@import "../../global";
+
+$leftGap: 10px;
+
+.label {
+    margin-bottom: 6px;
+    padding-left: 10px;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+
+    // Error Message
+    .errorSpan {
+        color: $errorColor;
+        font-weight: bold;
+        padding-left: 10px;
+        position: absolute;
+        // opacity: 0;
+        // animation: errorFadeOutAnimation 2.5s;
+    }
+}
+
+.mainContainer {
+    position: relative;
+    width: 100%;
+    height: max-content;
+    user-select: none;
+
+    .outsideClickDiv {
+        @include outsideClickDiv;
+        // opacity: 0;
+    }
+
+    .mainButton {
+        @include dropdownOptionContainer;
+        box-sizing: border-box;
+        position: relative;
+        cursor: pointer;
+        border: none;
+
+        .optionIcon {
+            @include dropdownIcon;
+        }
+
+        .chevronIcon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: auto;
+        }
+
+        .searchBox {
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            outline: none;
+            width: calc(100% - 55px);
+            height: 70%;
+            padding-left: 6px;
+            background-color: $offWhite;
+        }
+    }
+
+    .dropdown {
+        @include dropdownDropdown;
+        .optionIcon {
+            @include dropdownIcon;
+        }
+    }
+}

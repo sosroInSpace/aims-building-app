@@ -1,0 +1,68 @@
+@import "../../global";
+
+// Animation durations (should match the timing in the component)
+$fadeInDuration: 1s;
+$shrinkDuration: 1s;
+$fadeOutDuration: 1s;
+
+.loadingContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: $offBlack;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    visibility: visible;
+    transition:
+        opacity $fadeOutDuration ease-in-out,
+        visibility $fadeOutDuration ease-in-out;
+
+    &.fadeOut {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.animationWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 300px;
+    height: 300px;
+}
+
+.animationImage {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.animationImage {
+    animation:
+        fadeIn $fadeInDuration ease-out,
+        shrink $shrinkDuration ease-out;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes shrink {
+    0% {
+        transform: scale(1.5);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

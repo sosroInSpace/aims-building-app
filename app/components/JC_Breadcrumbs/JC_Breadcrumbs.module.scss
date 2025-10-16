@@ -1,0 +1,44 @@
+@import "../../global";
+
+.breadcrumbsContainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 31px;
+    width: 70vw;
+    max-width: 900px;
+
+    .breadcrumbItem {
+        display: flex;
+        align-items: center;
+        color: $primaryColor;
+        font-size: 14px;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+
+        &.current {
+            color: $white;
+            pointer-events: none;
+        }
+    }
+
+    .separator {
+        margin: 0 8px;
+        color: $white;
+    }
+}
+
+// - SCREEN SIZES - //
+
+@media (max-width: $smallScreenSize) {
+    .breadcrumbsContainer {
+        .breadcrumbItem {
+            font-size: 12px;
+        }
+        .separator {
+            margin: 0 6px;
+        }
+    }
+}

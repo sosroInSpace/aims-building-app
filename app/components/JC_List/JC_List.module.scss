@@ -1,0 +1,579 @@
+@import "../../global";
+
+$rowHeight: 40px;
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+
+    .searchContainer {
+        width: 200px;
+        margin-bottom: 20px;
+        position: relative;
+
+        &.multiColumn {
+            // align-self: flex-start; // Do not align left at all
+        }
+
+        .clearSearchButton {
+            position: absolute;
+            right: -26px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: $primaryColor;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            z-index: 2;
+            transition: color 0.1s;
+
+            &:hover {
+                color: $secondaryColor;
+            }
+
+            &:focus {
+                outline: none;
+            }
+        }
+    }
+
+    .table {
+        width: auto;
+        border-collapse: collapse;
+        color: $primaryColor;
+
+        th,
+        td {
+            padding: 0px 20px;
+            text-align: center;
+            border-bottom: $tinyBorderWidth solid rgba($secondaryColor, 1.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+            height: $rowHeight;
+            box-sizing: border-box;
+            overflow: visible;
+        }
+
+        th {
+            font-weight: bold;
+            background-color: transparent;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            white-space: nowrap;
+            width: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            /* Sortable headers are centered by default */
+
+            .headerLabelContainer {
+                position: relative;
+                width: max-content;
+                margin: 0 auto;
+
+                .headerLabel {
+                    width: max-content;
+                    height: max-content;
+                    display: inline-block;
+                    text-align: center;
+                }
+
+                .sortIndicator {
+                    display: inline-block;
+                    position: absolute;
+                    width: 13px;
+                    height: auto;
+                    right: -22px;
+                    top: 30%;
+                    transform: translateY(-50%);
+                    z-index: 1; /* Ensure it's above other elements */
+                }
+            }
+        }
+
+        thead {
+            tr:hover {
+                background-color: transparent;
+            }
+        }
+
+        td {
+            text-align: center;
+        }
+
+        tbody {
+            tr {
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+
+                &:hover {
+                    background-color: rgba($primaryColor, 0.1);
+                }
+            }
+
+            .tableRow {
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+
+                &:hover {
+                    background-color: rgba($primaryColor, 0.1);
+                }
+            }
+        }
+
+        .noDataRow {
+            cursor: default;
+
+            &:hover {
+                background-color: transparent;
+            }
+
+            .noDataCell {
+                @include loadingText;
+                padding-top: 20px;
+                border-bottom: none;
+            }
+        }
+
+        .loadingRow {
+            pointer-events: none;
+            visibility: hidden;
+
+            &:hover {
+                background-color: transparent;
+            }
+
+            td {
+                border-bottom-color: transparent !important;
+            }
+        }
+
+        .placeholderRow {
+            pointer-events: none;
+            visibility: hidden;
+
+            &:hover {
+                background-color: transparent;
+            }
+
+            td {
+                border-bottom-color: transparent !important;
+            }
+        }
+
+        &.loading {
+            th {
+                border-bottom-color: transparent !important;
+            }
+        }
+    }
+
+    .tableSpinnerOverlay {
+        height: 90%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .spinnerContainer {
+        height: 30px;
+    }
+
+    // Responsive column hiding
+    @media (max-width: $largeScreenSize) {
+        .hideOnLarge {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: $mediumScreenSize) {
+        .hideOnMedium {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: $smallScreenSize) {
+        .hideOnSmall {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: $tinyScreenSize) {
+        .hideOnTiny {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: $teenyTinyScreenSize) {
+        .hideOnTeenyTiny {
+            display: none !important;
+        }
+    }
+
+    .buttonContainer {
+        min-width: 140px;
+        width: max-content;
+        height: 44px;
+        padding: 0 20px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background-color: $offWhite;
+        outline-color: $primaryColor;
+        outline-width: $smallBorderWidth;
+        outline-style: solid;
+        border-radius: $largeBorderRadius;
+        font-size: 20px;
+        font-weight: bold;
+        overflow: visible;
+        user-select: none;
+        cursor: pointer;
+        transition:
+            outline-width 0.15s,
+            outline-color 0.35s,
+            outline-offset 0.15s;
+
+        // Text
+        .buttonText {
+            width: max-content;
+            overflow: visible;
+            color: black;
+        }
+
+        // Hover
+        &:hover {
+            outline-width: $largeBorderWidth;
+            outline-color: $secondaryColor;
+            outline-offset: -1px;
+            transition:
+                outline-width 0.04s,
+                outline-color 0.08s,
+                outline-offset 0.04s;
+        }
+
+        // Selected
+        &.buttonSelected {
+            outline-width: $largeBorderWidth;
+            outline-color: $secondaryColor;
+            outline-offset: -1px;
+            cursor: default !important;
+            transition:
+                outline-width 0s,
+                outline-color 0s;
+        }
+
+        // Icon
+        &.includeIcon {
+            column-gap: 8px;
+            justify-content: space-between;
+            .buttonIcon {
+                width: 20px;
+                height: auto;
+                margin-left: -5px;
+            }
+            .buttonText {
+                position: static;
+                transform: translate(0, 0);
+                flex-grow: 1;
+            }
+        }
+
+        // Icon Only
+        &.iconOnly {
+            min-width: 0;
+            padding: 0 15px;
+            border-radius: $tinyBorderRadius;
+            .buttonIcon {
+                margin-left: 0;
+            }
+        }
+
+        // Icon On Top
+        &.iconOnTop {
+            flex-direction: column;
+            padding: 5px 0;
+            height: max-content;
+            min-height: 82px;
+            row-gap: 5px;
+            justify-content: space-between;
+            .buttonText {
+                flex-grow: 0;
+            }
+            .buttonIcon {
+                margin-top: 2px;
+                height: 40px;
+                width: auto;
+                margin-left: 0;
+            }
+        }
+
+        // Secondary
+        &.secondary {
+            outline-color: transparent;
+            background-color: $primaryColor;
+            &:hover {
+                outline-color: $secondaryColor;
+            }
+            &.buttonSelected {
+                outline-color: $secondaryColor !important;
+            }
+        }
+
+        // Small
+        &.small {
+            min-width: 60px;
+            height: 34px;
+            padding: 0 14px;
+            font-size: 14px;
+            // font-weight: normal;
+            &:hover {
+                outline-width: $smallBorderWidth;
+            }
+            &.buttonSelected {
+                outline-width: $smallBorderWidth;
+            }
+        }
+
+        // Disabled
+        &.disabled {
+            outline: none !important;
+            // background-color: $grey;
+            opacity: 0.7;
+            cursor: inherit;
+            &:hover {
+                outline-width: $smallBorderWidth;
+                outline-color: $primaryColor;
+            }
+        }
+    }
+
+    // - SCREEN SIZES - //
+
+    @media (max-width: $tinyScreenSize) {
+        .enableResponsive.buttonContainer {
+            min-width: 115px;
+            height: 36px;
+            font-size: 16px;
+
+            .buttonIcon {
+                width: 17px !important;
+            }
+        }
+    }
+
+    @media (max-width: $teenyTinyScreenSize) {
+        .enableResponsive.buttonContainer {
+            min-width: 95px;
+            height: 30px;
+            padding: 0 10px;
+            font-size: 13px;
+            outline-width: $tinyBorderWidth;
+
+            &:hover {
+                outline-width: $smallBorderWidth;
+            }
+            &.buttonSelected {
+                outline-width: $smallBorderWidth;
+            }
+            .buttonIcon {
+                width: 13px !important;
+                margin-left: 0 !important;
+                margin-right: -2px !important;
+            }
+        }
+    }
+
+    // Paging Controls
+    .pagingControlsContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+
+        .pageInfo {
+            text-align: center;
+            margin-top: 5px;
+            color: $primaryColor;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .pagingButtons {
+            margin-top: 7px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+
+            .pagingButton {
+                min-width: 40px;
+                height: 40px;
+                padding: 8px 12px;
+                border: 2px solid $grey;
+                background-color: $white;
+                color: $primaryColor;
+                font-size: 14px;
+                font-weight: normal;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &:hover:not(:disabled) {
+                    border-color: $secondaryColor;
+                    background-color: rgba($secondaryColor, 0.1);
+                }
+
+                &:disabled {
+                    opacity: 0.9;
+                    cursor: not-allowed;
+                    background-color: $lightGrey;
+                }
+
+                &.currentPage {
+                    background-color: $primaryColor;
+                    color: $white;
+                    border-color: transparent;
+                    cursor: default;
+
+                    &:hover {
+                        background-color: $primaryColor;
+                        border-color: $primaryColor;
+                    }
+                }
+
+                &.previousButton,
+                &.nextButton,
+                &.firstButton,
+                &.lastButton {
+                    width: 40px;
+                    height: 40px;
+                    color: $secondaryColor;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 2px;
+                }
+                &.firstButton,
+                &.lastButton {
+                    gap: 0px;
+                }
+            }
+
+            .ellipsis {
+                color: $primaryColor;
+                font-size: 16px;
+                padding: 0 4px;
+            }
+
+            .pagingSpacer {
+                width: 5.5px;
+                height: 1px;
+            }
+
+            // Chevron styles for navigation buttons
+            .chevronLeft {
+                width: 12px;
+                height: auto;
+                transform: rotate(90deg);
+            }
+
+            .chevronRight {
+                width: 12px;
+                height: auto;
+                transform: rotate(-90deg);
+            }
+
+            .doubleChevronLeft {
+                width: 12px;
+                height: auto;
+                transform: rotate(90deg);
+            }
+
+            .doubleChevronRight {
+                width: 12px;
+                height: auto;
+                transform: rotate(-90deg);
+            }
+        }
+    }
+
+    // Page Size Controls
+    .pageSizeContainer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+
+        .pageSizeText {
+            color: $primaryColor;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .pageSizeBox {
+            width: 30px;
+            height: 30px;
+            background-color: $primaryColor;
+            color: $white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: $tinyBorderRadius;
+            transition: background-color 0.2s ease;
+
+            &:hover {
+                background-color: $secondaryColor;
+            }
+        }
+    }
+
+    // Page Size Modal Content
+    .pageSizeModalContent {
+        display: flex;
+        flex-direction: column;
+        min-width: 80px;
+
+        .pageSizeOption {
+            padding: 14px 16px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+
+            &:hover:not(.currentPageSize) {
+                background-color: rgba($primaryColor, 0.1);
+            }
+
+            &.currentPageSize {
+                opacity: 0.6;
+                cursor: default;
+            }
+        }
+    }
+}

@@ -1,0 +1,295 @@
+@import "../global";
+
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    padding: 20px 0 0 0;
+    box-sizing: border-box;
+    background-color: $offWhite;
+
+    .spinnerContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+}
+
+.selectAllContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.qualificationsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
+    padding: 10px 0;
+
+    .qualificationTile {
+        padding: 12px 16px;
+        border: 2px solid $lightGrey;
+        border-radius: $tinyBorderRadius;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: $white;
+        user-select: none;
+
+        &:hover {
+            border-color: $primaryColor;
+            background-color: rgba($primaryColor, 0.05);
+        }
+
+        &.selected {
+            background-color: $secondaryColor;
+            color: $white;
+            border-color: $secondaryColor;
+        }
+
+        &.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    }
+}
+
+.registerContainer {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.passwordRequirementsField {
+    margin-bottom: 0 !important;
+}
+
+.qualificationsField {
+    width: 450px;
+    max-width: 100%;
+
+    .qualificationsLabel {
+        margin-bottom: 6px;
+        padding-left: 11px;
+        text-align: left;
+        font-size: $defaultFontSize;
+        font-weight: bold;
+    }
+
+    .qualificationsButtonContainer {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+    }
+}
+
+.userRoleContainer {
+    background-color: $lightGrey;
+    border-radius: $smallBorderRadius;
+    padding: 20px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .adminUserSection {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+.employeeSelectionContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .employeeSelectionLabel {
+        font-weight: bold;
+        color: $primaryColor;
+        text-align: center;
+    }
+
+    .employeeSelectionButton {
+        padding: 12px 16px;
+        border: 2px solid $lightGrey;
+        border-radius: $tinyBorderRadius;
+        background-color: $white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+
+        &:hover {
+            border-color: $primaryColor;
+            background-color: rgba($primaryColor, 0.05);
+        }
+
+        .buttonText {
+            color: $darkGrey;
+        }
+    }
+}
+
+// Modal button containers - centered alignment like other modals
+.modalButtonsContainer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+}
+
+// Responsive design for modal buttons
+@media (max-width: $teenyTinyScreenSize) {
+    .modalButtonsContainer {
+        flex-direction: column;
+        align-items: center;
+        row-gap: 25px;
+        column-gap: 0;
+    }
+}
+
+.employeeModalTile {
+    padding: 12px 16px;
+    border: 1px solid $lightGrey;
+    border-radius: $tinyBorderRadius;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: $white;
+    margin-bottom: 8px;
+
+    &:hover {
+        border-color: $primaryColor;
+        background-color: rgba($primaryColor, 0.05);
+    }
+
+    &.selectedTile {
+        background-color: $secondaryColor;
+        color: $white;
+        border-color: $secondaryColor;
+    }
+}
+
+// Reports tab styles - matching Customer page layout exactly
+// Reports container wrapper with position relative for addDocumentButton
+.reportsContainer {
+    position: relative;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+// Search container styling
+.searchContainer {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+// Custom search field styling
+.searchField {
+    width: 100%;
+}
+
+// Custom search input styling - override JC_Field's inputContainer
+.searchInput {
+    width: 100% !important;
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+// Reports list styling to match JC_FormTablet option tiles
+.reportsList {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+// Report tile styling to match JC_FormTablet option tiles exactly
+.reportTile {
+    width: 100%;
+    min-height: 50px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px 0 15px;
+    font-size: 12px;
+    cursor: pointer;
+    background-color: transparent;
+    color: $offBlack;
+    box-sizing: border-box;
+    position: relative;
+
+    // Match JC_FormTablet field tile hover style exactly
+    &:hover:not(.loading):not(.selectedTile) {
+        background-color: $grey;
+    }
+
+    // Match JC_FormTablet field tile selected style exactly
+    &.selectedTile {
+        background-color: $secondaryColor;
+
+        .reportContent {
+            .reportAddress {
+                color: $white;
+            }
+
+            .reportDefects {
+                color: $white;
+            }
+        }
+
+        .modifiedContainer {
+            color: $white;
+        }
+    }
+
+    .reportContent {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        flex-grow: 1;
+        gap: 3px;
+
+        .reportAddress {
+            font-weight: bold;
+            color: $offBlack;
+            font-size: 12px;
+        }
+
+        .reportDefects {
+            color: red;
+            font-size: 8px;
+            font-weight: bold;
+        }
+    }
+
+    .modifiedContainer {
+        display: flex;
+        align-items: center;
+        font-size: 10px;
+        color: $offBlack;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
+.noReports {
+    padding: 20px;
+    text-align: center;
+    color: $secondaryColor;
+    font-size: 12px;
+    font-style: italic;
+}

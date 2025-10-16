@@ -1,0 +1,112 @@
+@import "../../global";
+
+.container {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+
+    .imageContainer {
+        width: 300px;
+        height: 240px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+        border: 2px solid #ddd;
+        overflow: hidden;
+        position: relative;
+
+        .image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .noImagePlaceholder {
+            color: $secondaryColor;
+            font-size: 14px;
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        .savingContainer {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            min-width: min-content;
+            min-height: min-content;
+
+            .savingText {
+                font-size: 14px;
+                color: $secondaryColor;
+                text-align: center;
+                line-height: 1.4;
+            }
+        }
+    }
+
+    .buttonsContainer {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+
+        .galleryIconContainer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: $smallBorderRadius;
+            transition: background-color 0.2s ease;
+
+            &:hover {
+                background-color: #f0f0f0;
+            }
+
+            .galleryIcon {
+                margin-top: -1px;
+                margin-right: -2px;
+                font-size: 24px;
+                line-height: 1;
+            }
+
+            .galleryText {
+                font-size: 14px;
+                font-weight: 500;
+                color: $secondaryColor;
+            }
+        }
+
+        .cameraIconContainer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: $smallBorderRadius;
+            transition: background-color 0.2s ease;
+
+            &:hover {
+                background-color: #f0f0f0;
+            }
+
+            .cameraIcon {
+                margin-top: -9px;
+                margin-right: -2px;
+                font-size: 24px;
+                line-height: 1;
+            }
+
+            .cameraText {
+                font-size: 14px;
+                font-weight: 500;
+                color: $secondaryColor;
+            }
+        }
+    }
+}
