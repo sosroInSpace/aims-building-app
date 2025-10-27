@@ -27,14 +27,29 @@ export default function Page_Login() {
 
     useEffect(() => {
         if (!JC_Utils.isOnMobile()) {
-            setTimeout(() => (document.getElementById("login-first-input") as HTMLInputElement)?.select(), 0);
+            setTimeout(
+                () =>
+                    (
+                        document.getElementById(
+                            "login-first-input",
+                        ) as HTMLInputElement
+                    )?.select(),
+                0,
+            );
         }
 
         // Check for forgot password message (with incognito mode safety)
-        const forgotPasswordSent = JC_Utils.safeLocalStorageGetItem(LocalStorageKeyEnum.JC_ShowForgotPasswordSent);
+        const forgotPasswordSent = JC_Utils.safeLocalStorageGetItem(
+            LocalStorageKeyEnum.JC_ShowForgotPasswordSent,
+        );
         if (forgotPasswordSent === "1") {
-            JC_Utils.showToastSuccess("A password reset link has been sent to your email!");
-            JC_Utils.safeLocalStorageSetItem(LocalStorageKeyEnum.JC_ShowForgotPasswordSent, "0");
+            JC_Utils.showToastSuccess(
+                "A password reset link has been sent to your email!",
+            );
+            JC_Utils.safeLocalStorageSetItem(
+                LocalStorageKeyEnum.JC_ShowForgotPasswordSent,
+                "0",
+            );
         }
 
         // Check if we're in incognito mode and warn user if needed
@@ -49,7 +64,9 @@ export default function Page_Login() {
         })();
 
         if (isIncognito) {
-            console.log("Incognito mode detected - some features may be limited");
+            console.log(
+                "Incognito mode detected - some features may be limited",
+            );
         }
     }, []);
 
@@ -63,9 +80,15 @@ export default function Page_Login() {
             // Clear any existing localStorage cache before login (safe for incognito)
             JC_Utils.clearAllLocalStorage();
             // Set welcome flag (needs to be after clearAllLocalStorage)
-            JC_Utils.safeLocalStorageSetItem(LocalStorageKeyEnum.JC_ShowLoggedInWelcome, "1");
+            JC_Utils.safeLocalStorageSetItem(
+                LocalStorageKeyEnum.JC_ShowLoggedInWelcome,
+                "1",
+            );
 
-            let result = await validateCredentials(loginEmail.toLowerCase(), loginPassword);
+            let result = await validateCredentials(
+                loginEmail.toLowerCase(),
+                loginPassword,
+            );
             // IF error
             if (result.error) {
                 // Check if 2FA is required
@@ -73,9 +96,13 @@ export default function Page_Login() {
                     // Store password temporarily for 2FA verification
                     sessionStorage.setItem("tempPassword", loginPassword);
                     // Generate and send 2FA code
-                    await JC_PostRaw("user/generate2FACode", { email: loginEmail.toLowerCase() });
+                    await JC_PostRaw("user/generate2FACode", {
+                        email: loginEmail.toLowerCase(),
+                    });
                     // Redirect to 2FA page
-                    router.push(`/twoFactorAuth?email=${encodeURIComponent(loginEmail.toLowerCase())}`);
+                    router.push(
+                        `/twoFactorAuth?email=${encodeURIComponent(loginEmail.toLowerCase())}`,
+                    );
                 } else {
                     setErrorMessage(result.error);
                     setIsLoading(false);
@@ -86,7 +113,7 @@ export default function Page_Login() {
                     email: loginEmail.toLowerCase(),
                     password: loginPassword,
                     callbackUrl: "/users",
-                    redirect: false // Handle redirect manually for better incognito support
+                    redirect: false, // Handle redirect manually for better incognito support
                 });
 
                 if (signInResult?.error) {
@@ -96,7 +123,9 @@ export default function Page_Login() {
                     // Manual redirect for incognito mode compatibility
                     window.location.href = "/users";
                 } else {
-                    setErrorMessage("Unexpected error occurred. Please try again.");
+                    setErrorMessage(
+                        "Unexpected error occurred. Please try again.",
+                    );
                     setIsLoading(false);
                 }
             }
@@ -112,6 +141,17 @@ export default function Page_Login() {
     return (
         <div className={styles.mainContainer}>
             <div className={styles.formContainer}>
+                <div style={{ width: "100%" }}>
+                    <img
+                        src="https://aimsengineering.com.au/wp-content/themes/aimsengineering/images/aims-engineering-logo.webp"
+                        alt="Aims Engineering"
+                        className="main-logo"
+                        style={{
+                            width: 300,
+                            height: "auto",
+                        }}
+                    />
+                </div>
                 {/* Title */}
                 <JC_Title title="Login" />
 
@@ -126,23 +166,29 @@ export default function Page_Login() {
                         {
                             ...D_FieldModel_Email(),
                             inputId: "login-first-input",
-                            onChange: newValue => setLoginEmail(newValue),
-                            value: loginEmail
+                            onChange: (newValue) => setLoginEmail(newValue),
+                            value: loginEmail,
                         },
                         // Password
                         {
                             inputId: "login-password-input",
                             type: FieldTypeEnum.Password,
                             label: "Password",
-                            onChange: newValue => setLoginPassword(newValue),
+                            onChange: (newValue) => setLoginPassword(newValue),
                             value: loginPassword,
-                            validate: (v: any) => (JC_Utils.stringNullOrEmpty(v) ? "Enter a password." : "")
-                        }
+                            validate: (v: any) =>
+                                JC_Utils.stringNullOrEmpty(v)
+                                    ? "Enter a password."
+                                    : "",
+                        },
                     ]}
                 />
 
                 {/* Forgot Password */}
-                <div className={styles.smallTextButton} onClick={() => router.push("forgotPassword")}>
+                <div
+                    className={styles.smallTextButton}
+                    onClick={() => router.push("forgotPassword")}
+                >
                     Forgot Password?
                 </div>
             </div>

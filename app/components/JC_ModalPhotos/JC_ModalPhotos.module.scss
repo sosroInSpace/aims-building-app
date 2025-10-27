@@ -23,13 +23,13 @@ $topBottomPadding: 26px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background-color: $offWhite;
-    border: 2px solid $primaryColor;
+    background-color: $primaryColor;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: $largeBorderRadius;
     box-sizing: border-box;
-    @include containerShadow;
     display: flex;
     flex-direction: column;
+    padding-top: 30px;
 
     .closeButton {
         position: absolute;
@@ -169,7 +169,9 @@ $topBottomPadding: 26px;
                         }
 
                         .upArrow {
-                            transform: rotate(90deg); // Rotate left arrow to point up
+                            transform: rotate(
+                                90deg
+                            ); // Rotate left arrow to point up
                         }
                     }
 
@@ -187,7 +189,9 @@ $topBottomPadding: 26px;
                         }
 
                         .downArrow {
-                            transform: rotate(-90deg); // Rotate left arrow to point down
+                            transform: rotate(
+                                -90deg
+                            ); // Rotate left arrow to point down
                         }
                     }
                 }
@@ -297,7 +301,7 @@ $topBottomPadding: 26px;
         align-items: center;
         margin-top: 20px;
         padding-top: 15px;
-        border-top: 1px solid #ddd;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
 
         .footerLeft {
             display: flex;

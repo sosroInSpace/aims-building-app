@@ -23,6 +23,7 @@
 
     .customNodeContainer {
         position: relative;
+        width: 100%;
 
         .customNodeErrorSpan {
             position: absolute;
@@ -39,6 +40,7 @@
 
     .submitButtonOverride {
         margin-top: 10px;
+        background: $secondaryColor;
     }
 
     .buttonRow {

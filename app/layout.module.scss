@@ -7,7 +7,9 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: var(--font-open-sans); // Font family used everywhere, can only set this if have "openSans.variable" in ts
+    font-family: var(
+        --font-open-sans
+    ); // Font family used everywhere, can only set this if have "openSans.variable" in ts
     background-color: $offWhite;
 
     // Main layout container for header and content
@@ -26,6 +28,7 @@
         box-sizing: border-box;
         max-height: 100vh;
         overflow-y: auto;
+        background: $primaryColor;
     }
 
     // textarea

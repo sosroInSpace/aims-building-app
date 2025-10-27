@@ -12,7 +12,10 @@
     font-family: var(--font-open-sans);
     font-weight: bold;
     letter-spacing: 5px;
-    color: $primaryColor;
+    color: $white;
+    font-size: 20px;
+    padding-left: 10px;
+    text-align: left;
 
     &.secondary {
         color: $secondaryColor;

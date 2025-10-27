@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     padding: 15px 20px;
-    background-color: $white;
+    background-color: $primaryColor;
     min-height: 40px;
     gap: 20px;
 
@@ -39,6 +39,7 @@
         .backButtonIcon {
             width: 20px;
             height: 20px;
+            filter: invert(1);
         }
     }
 
@@ -46,7 +47,7 @@
         margin: 0;
         font-size: 18px;
         font-weight: bold;
-        color: $primaryColor;
+        color: $white;
     }
 }
 
@@ -95,8 +96,8 @@
             font-weight: bold;
             font-size: 14px;
             text-align: center;
-            border-bottom: 1px solid $lightGrey;
             position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
 
             .customOrderCheckbox {
                 position: absolute;
@@ -243,7 +244,7 @@
         .formListTableContainer {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 0px;
 
             .formListTable {
                 width: 100%;
@@ -406,18 +407,25 @@
         }
 
         // More specific selectors for react-swipeable-list v1.10.0
-        :global(.swipeable-list-item) :global(.swipeable-list-item__trailing-actions) .deleteButton {
+        :global(.swipeable-list-item)
+            :global(.swipeable-list-item__trailing-actions)
+            .deleteButton {
             background-color: $errorColor !important;
             color: white !important;
         }
 
-        :global(.swipeable-list) :global(.swipeable-list-item) :global(.swipeable-list-item__trailing-actions) .deleteButton {
+        :global(.swipeable-list)
+            :global(.swipeable-list-item)
+            :global(.swipeable-list-item__trailing-actions)
+            .deleteButton {
             background-color: $errorColor !important;
             color: white !important;
         }
 
         // Target the SwipeAction component directly
-        :global(.swipeable-list-item__trailing-actions) :global(.swipe-action) .deleteButton {
+        :global(.swipeable-list-item__trailing-actions)
+            :global(.swipe-action)
+            .deleteButton {
             background-color: $errorColor !important;
             color: white !important;
         }
@@ -458,18 +466,25 @@
         }
 
         // More specific selectors for react-swipeable-list v1.10.0
-        :global(.swipeable-list-item) :global(.swipeable-list-item__leading-actions) .moveButton {
+        :global(.swipeable-list-item)
+            :global(.swipeable-list-item__leading-actions)
+            .moveButton {
             background-color: #007bff !important;
             color: white !important;
         }
 
-        :global(.swipeable-list) :global(.swipeable-list-item) :global(.swipeable-list-item__leading-actions) .moveButton {
+        :global(.swipeable-list)
+            :global(.swipeable-list-item)
+            :global(.swipeable-list-item__leading-actions)
+            .moveButton {
             background-color: #007bff !important;
             color: white !important;
         }
 
         // Target the SwipeAction component directly
-        :global(.swipeable-list-item__leading-actions) :global(.swipe-action) .moveButton {
+        :global(.swipeable-list-item__leading-actions)
+            :global(.swipe-action)
+            .moveButton {
             background-color: #007bff !important;
             color: white !important;
         }
@@ -517,6 +532,7 @@
             border-bottom: 1px solid $lightGrey;
             text-align: center;
             position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
 
             .inputPaneHeaderText {
                 width: 100%;
@@ -847,7 +863,9 @@
     display: flex;
     flex-direction: column;
     min-width: 300px;
-    max-height: calc(100vh - 200px); // Leave space for modal padding and buttons
+    max-height: calc(
+        100vh - 200px
+    ); // Leave space for modal padding and buttons
 
     .optionEditModalScrollableContent {
         overflow-y: auto;

@@ -1,0 +1,44 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Next.js
+.next/
+out/
+.next-static/
+.vercel/
+.turbo/
+
+# Env files (keep only an example)
+.env.production.local
+.env.local
+.env.*
+!.env.example
+
+# Build / dist (if you use tsup/tsc builds)
+dist/
+build/
+
+# Testing / coverage
+coverage/
+.playwright/
+.vitest/
+jest-*.json
+
+# OS / Editors
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Lint/Typecheck caches
+.eslintcache
+.tsbuildinfo

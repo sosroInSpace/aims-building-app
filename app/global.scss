@@ -39,7 +39,7 @@ $emptyPageHeight: 500px;
 $tinyBorderWidth: 2px;
 $smallBorderWidth: 3px;
 $largeBorderWidth: 4px;
-$tinyBorderRadius: 5px;
+$tinyBorderRadius: 10px;
 $smallBorderRadius: 20px;
 $mediumBorderRadius: 25px;
 $largeBorderRadius: 30px;
@@ -78,6 +78,16 @@ $smallImageWidth: 80px;
 $smallImageHeight: 62px;
 $charlotteOpacity: 0.85;
 
+html .main-logo {
+    max-width: 300px;
+    width: 100%;
+}
+#rootMainContainer {
+    background: $primaryColor;
+}
+#rootMainContainer label {
+    color: $white;
+}
 // Dropdowns
 @mixin dropdownIcon {
     width: 15%;

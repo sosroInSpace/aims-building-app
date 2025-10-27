@@ -36,8 +36,9 @@
 
             &.selected {
                 outline-width: 3px;
-                outline-color: $primaryColor !important;
+                outline-color: $white !important;
                 outline-offset: -1px;
+                background: $white;
             }
         }
     }

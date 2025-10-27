@@ -14,11 +14,13 @@
         display: flex;
         align-items: center;
         padding: 15px 20px;
-        background-color: $white;
+        background-color: $primaryColor;
         min-height: 60px;
         border-bottom: $smallBorderWidth solid $primaryColor;
         gap: 20px;
-
+        h2 {
+            color: $white !important;
+        }
         .backButton {
             margin-top: 2px;
             display: flex;
@@ -28,6 +30,7 @@
             height: 32px;
             cursor: pointer;
             transition: opacity 0.2s ease;
+            filter: invert(1);
 
             &:hover {
                 opacity: 0.7;
@@ -131,7 +134,7 @@
     justify-content: center;
     align-items: center;
     padding: 15px 20px;
-    background-color: $white;
+    background-color: $secondaryColor;
     border-top: $smallBorderWidth solid $primaryColor;
     min-height: 60px;
     gap: 15px;

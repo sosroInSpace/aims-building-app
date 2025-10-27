@@ -7,7 +7,7 @@
     width: 100%;
     padding: 20px 0 0 0;
     box-sizing: border-box;
-    background-color: $offWhite;
+    background-color: $primaryColor;
 
     .spinnerContainer {
         display: flex;
@@ -89,13 +89,21 @@
 }
 
 .userRoleContainer {
-    background-color: $lightGrey;
+    background-color: rgba(0, 0, 0, 0.1);
     border-radius: $smallBorderRadius;
     padding: 20px 30px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-
+    label,
+    div {
+        color: $white !important;
+    }
+    button {
+        background: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: none !important;
+    }
     .adminUserSection {
         display: flex;
         justify-content: center;
@@ -204,7 +212,9 @@
     border: none !important;
     box-shadow: none !important;
 }
-
+.customNodeContainer {
+    width: 100% !important;
+}
 // Reports list styling to match JC_FormTablet option tiles
 .reportsList {
     display: flex;

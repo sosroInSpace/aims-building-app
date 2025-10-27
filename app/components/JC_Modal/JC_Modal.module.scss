@@ -17,19 +17,20 @@ $topBottomPadding: 26px;
 // Modal
 .modalContainer {
     z-index: 999;
-    width: max-content;
+    width: calc(100% - 50px);
     max-height: calc(100vh - 100px);
     padding: $topBottomPadding 30px $topBottomPadding 30px;
     position: fixed;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background-color: $offWhite;
+    background-color: $primaryColor;
     border: 2px solid $primaryColor;
     border-radius: $largeBorderRadius;
     box-sizing: border-box;
-    @include containerShadow;
-
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 40px;
+    padding-bottom: 40px;
     .closeButton {
         position: absolute;
         top: 15px;

@@ -9,7 +9,8 @@
     background-color: $primaryColor;
     display: flex;
     flex-direction: column;
-    flex-shrink: 0; // Prevent shrinking
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 
     // Logo + Account
     .logoAccountContainer {
@@ -110,7 +111,9 @@
                 height: 24px;
                 opacity: 0.9;
                 transition: opacity 0.3s ease;
-                filter: brightness(0) saturate(100%) invert(58%) sepia(36%) saturate(1234%) hue-rotate(169deg) brightness(95%) contrast(85%);
+                filter: brightness(0) saturate(100%) invert(58%) sepia(36%)
+                    saturate(1234%) hue-rotate(169deg) brightness(95%)
+                    contrast(85%);
             }
 
             .navLabel {
@@ -164,7 +167,12 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 25%, transparent 50%);
+        background: radial-gradient(
+            circle at center,
+            rgba(255, 255, 255, 0.2) 0%,
+            rgba(255, 255, 255, 0.08) 25%,
+            transparent 50%
+        );
         border-radius: inherit;
         opacity: 0;
         animation: glowFade 0.4s ease-out;

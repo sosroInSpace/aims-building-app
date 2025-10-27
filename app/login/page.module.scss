@@ -2,7 +2,8 @@
 
 .mainContainer {
     @include mainPageStyles;
-
+    background: $primaryColor;
+    min-height: 100vh;
     // Form Container
     .formContainer {
         position: relative;
@@ -14,13 +15,16 @@
         margin-top: 40px;
         width: max-content;
         max-width: 100%;
+        label {
+            color: $white;
+        }
 
         // Small Text
         .smallTextButton {
             font-weight: bold;
             user-select: none;
             cursor: pointer;
-
+            color: $white;
             &:hover {
                 color: $secondaryColor;
             }

@@ -1,7 +1,9 @@
 "use client";
 
 import JC_Button from "../JC_Button/JC_Button";
-import JC_ImageAnnotator, { Annotation } from "../JC_ImageAnnotator/JC_ImageAnnotator";
+import JC_ImageAnnotator, {
+    Annotation,
+} from "../JC_ImageAnnotator/JC_ImageAnnotator";
 import JC_ModalConfirmation from "../JC_ModalConfirmation/JC_ModalConfirmation";
 import JC_Spinner from "../JC_Spinner/JC_Spinner";
 import JC_Title from "../JC_Title/JC_Title";
@@ -29,19 +31,35 @@ export default function JC_ModalPhotos(
         onSortOrderChanged?: (files: JC_ModalPhotosModel[]) => void;
         s3KeyPath?: string;
         onImagesUploaded?: () => Promise<JC_ModalPhotosModel[]>; // Callback after all selected images are uploaded, returns updated files
-    }>
+    }>,
 ) {
     // - STATE - //
-    const [images, setImages] = useState<{ fileId: string; signedUrl: string; fileName: string; fileModel: FileModel }[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{ fileId: string; signedUrl: string; fileName: string; fileModel: FileModel } | null>(null);
+    const [images, setImages] = useState<
+        {
+            fileId: string;
+            signedUrl: string;
+            fileName: string;
+            fileModel: FileModel;
+        }[]
+    >([]);
+    const [selectedImage, setSelectedImage] = useState<{
+        fileId: string;
+        signedUrl: string;
+        fileName: string;
+        fileModel: FileModel;
+    } | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isCapturingPhoto, setIsCapturingPhoto] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isEditingImage, setIsEditingImage] = useState<boolean>(false);
-    const [isSavingAnnotation, setIsSavingAnnotation] = useState<boolean>(false);
-    const [pendingReselectionFileId, setPendingReselectionFileId] = useState<string | null>(null);
+    const [isSavingAnnotation, setIsSavingAnnotation] =
+        useState<boolean>(false);
+    const [pendingReselectionFileId, setPendingReselectionFileId] = useState<
+        string | null
+    >(null);
 
-    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState<boolean>(false);
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] =
+        useState<boolean>(false);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -59,7 +77,7 @@ export default function JC_ModalPhotos(
             }
 
             // Extract fileIds from the files array
-            const fileIds = _.files.map(f => f.FileId);
+            const fileIds = _.files.map((f) => f.FileId);
 
             // Use the new FileModel.GetListByIdsList method which includes signed URLs
             const filesResponse = await FileModel.GetListByIdsList(fileIds);
@@ -67,14 +85,15 @@ export default function JC_ModalPhotos(
                 filesResponse?.ResultList?.map((file: FileModel) => ({
                     fileId: file.Id,
                     signedUrl: file.Ex_FileSignedUrl || "",
-                    fileName: file.FileName || `Image ${file.Id.substring(0, 8)}`,
-                    fileModel: file
+                    fileName:
+                        file.FileName || `Image ${file.Id.substring(0, 8)}`,
+                    fileModel: file,
                 })) || [];
 
             // Sort images by SortOrder from the files prop (which already has the correct sort orders)
             const sortedImages = loadedImages.sort((a, b) => {
-                const aFile = _.files.find(f => f.FileId === a.fileId);
-                const bFile = _.files.find(f => f.FileId === b.fileId);
+                const aFile = _.files.find((f) => f.FileId === a.fileId);
+                const bFile = _.files.find((f) => f.FileId === b.fileId);
                 return (aFile?.SortOrder || 0) - (bFile?.SortOrder || 0);
             });
 
@@ -84,26 +103,45 @@ export default function JC_ModalPhotos(
             if (sortedImages.length > 0) {
                 // If there's a pending re-selection, try to select that image
                 if (pendingReselectionFileId) {
-                    const imageToReselect = sortedImages.find(img => img.fileId === pendingReselectionFileId);
+                    const imageToReselect = sortedImages.find(
+                        (img) => img.fileId === pendingReselectionFileId,
+                    );
                     if (imageToReselect) {
                         setSelectedImage(imageToReselect);
 
                         // Scroll to the re-selected image with 0.3 second delay
                         setTimeout(() => {
                             if (imagesListRef.current) {
-                                const selectedImageIndex = sortedImages.findIndex(img => img.fileId === pendingReselectionFileId);
+                                const selectedImageIndex =
+                                    sortedImages.findIndex(
+                                        (img) =>
+                                            img.fileId ===
+                                            pendingReselectionFileId,
+                                    );
                                 if (selectedImageIndex >= 0) {
                                     // Calculate the scroll position for the selected image
                                     // Each image item has a fixed height, we need to scroll to show the selected image
-                                    const imageElements = imagesListRef.current.querySelectorAll(".imageListItem");
+                                    const imageElements =
+                                        imagesListRef.current.querySelectorAll(
+                                            ".imageListItem",
+                                        );
                                     if (imageElements[selectedImageIndex]) {
-                                        const selectedElement = imageElements[selectedImageIndex] as HTMLElement;
-                                        const containerRect = imagesListRef.current.getBoundingClientRect();
-                                        const elementRect = selectedElement.getBoundingClientRect();
+                                        const selectedElement = imageElements[
+                                            selectedImageIndex
+                                        ] as HTMLElement;
+                                        const containerRect =
+                                            imagesListRef.current.getBoundingClientRect();
+                                        const elementRect =
+                                            selectedElement.getBoundingClientRect();
 
                                         // Calculate scroll position to center the selected image in view
-                                        const scrollTop = selectedElement.offsetTop - imagesListRef.current.clientHeight / 2 + selectedElement.clientHeight / 2;
-                                        imagesListRef.current.scrollTop = Math.max(0, scrollTop);
+                                        const scrollTop =
+                                            selectedElement.offsetTop -
+                                            imagesListRef.current.clientHeight /
+                                                2 +
+                                            selectedElement.clientHeight / 2;
+                                        imagesListRef.current.scrollTop =
+                                            Math.max(0, scrollTop);
                                     }
                                 }
                             }
@@ -155,13 +193,17 @@ export default function JC_ModalPhotos(
             }
 
             // Remove the image from the local state
-            setImages(prevImages => prevImages.filter(img => img.fileId !== selectedImage.fileId));
+            setImages((prevImages) =>
+                prevImages.filter((img) => img.fileId !== selectedImage.fileId),
+            );
 
             // Clear selected image if it was the deleted one
             setSelectedImage(null);
 
             // Auto-select first remaining image if available
-            const remainingImages = images.filter(img => img.fileId !== selectedImage.fileId);
+            const remainingImages = images.filter(
+                (img) => img.fileId !== selectedImage.fileId,
+            );
             if (remainingImages.length > 0) {
                 setSelectedImage(remainingImages[0]);
             }
@@ -227,19 +269,27 @@ export default function JC_ModalPhotos(
 
     const handleTakePhoto = async () => {
         // Check if camera/media devices are available
-        if (typeof navigator !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        if (
+            typeof navigator !== "undefined" &&
+            navigator.mediaDevices &&
+            navigator.mediaDevices.getUserMedia
+        ) {
             try {
                 // Try to access camera to check if it's available
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                });
                 // Camera is available, stop the stream and trigger file input
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach((track) => track.stop());
                 if (fileInputRef.current) {
                     fileInputRef.current.click();
                 }
             } catch (error) {
                 // Camera not available or permission denied, show error toast
                 console.log("Camera not available:", error);
-                JC_Utils.showToastError("No camera device detected or camera access denied");
+                JC_Utils.showToastError(
+                    "No camera device detected or camera access denied",
+                );
             }
         } else {
             // No media devices support, show error toast
@@ -254,7 +304,9 @@ export default function JC_ModalPhotos(
         }
     };
 
-    const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryChange = async (
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         const files = event.target.files;
         if (files && files.length > 0) {
             setIsCapturingPhoto(true);
@@ -265,21 +317,31 @@ export default function JC_ModalPhotos(
 
                     // Add a small delay between uploads to ensure different timestamps
                     if (i > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, 100),
+                        ); // 100ms delay
                     }
 
                     // Convert file to base64
                     const reader = new FileReader();
                     await new Promise<void>((resolve, reject) => {
-                        reader.onload = async e => {
+                        reader.onload = async (e) => {
                             const base64 = e.target?.result as string;
                             if (base64) {
                                 try {
                                     // Resize image to 800x600 before saving
-                                    const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
+                                    const resizedBase64 =
+                                        await JC_Utils_Files.resizeBase64Image(
+                                            base64,
+                                            800,
+                                            600,
+                                        );
                                     await savePhotoToAws(resizedBase64);
                                 } catch (resizeError) {
-                                    console.error("Error resizing image:", resizeError);
+                                    console.error(
+                                        "Error resizing image:",
+                                        resizeError,
+                                    );
                                     // If resize fails, save original image
                                     await savePhotoToAws(base64);
                                 }
@@ -288,14 +350,18 @@ export default function JC_ModalPhotos(
                         };
                         reader.onerror = () => {
                             console.error("Error reading file:", file.name);
-                            reject(new Error(`Failed to read file: ${file.name}`));
+                            reject(
+                                new Error(`Failed to read file: ${file.name}`),
+                            );
                         };
                         reader.readAsDataURL(file);
                     });
                 }
             } catch (error) {
                 console.error("Error processing gallery images:", error);
-                JC_Utils.showToastError("Failed to process some gallery images");
+                JC_Utils.showToastError(
+                    "Failed to process some gallery images",
+                );
             } finally {
                 setIsCapturingPhoto(false);
             }
@@ -304,19 +370,26 @@ export default function JC_ModalPhotos(
         event.target.value = "";
     };
 
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         const file = event.target.files?.[0];
         if (file) {
             setIsCapturingPhoto(true);
             try {
                 // Convert file to base64
                 const reader = new FileReader();
-                reader.onload = async e => {
+                reader.onload = async (e) => {
                     const base64 = e.target?.result as string;
                     if (base64) {
                         try {
                             // Resize image to 800x600 before saving
-                            const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
+                            const resizedBase64 =
+                                await JC_Utils_Files.resizeBase64Image(
+                                    base64,
+                                    800,
+                                    600,
+                                );
                             await savePhotoToAws(resizedBase64);
                         } catch (resizeError) {
                             console.error("Error resizing image:", resizeError);
@@ -352,15 +425,32 @@ export default function JC_ModalPhotos(
             const fileName = `${imageName}.${imageExtension}`;
 
             // Generate S3 key using provided path or default
-            const s3Key = _.s3KeyPath ? `${_.s3KeyPath}/${fileName}` : `Images/${fileName}`;
+            const s3Key = _.s3KeyPath
+                ? `${_.s3KeyPath}/${fileName}`
+                : `Images/${fileName}`;
 
             // Call the generic AWS save API
-            const result = await JC_PostRaw<{ fileData: string; key: string; contentType: MimeType; fileName: string; notes: string }, { success: boolean; fileId: string; fileName: string; key: string; message: string }>("aws/saveFileToAws", {
+            const result = await JC_PostRaw<
+                {
+                    fileData: string;
+                    key: string;
+                    contentType: MimeType;
+                    fileName: string;
+                    notes: string;
+                },
+                {
+                    success: boolean;
+                    fileId: string;
+                    fileName: string;
+                    key: string;
+                    message: string;
+                }
+            >("aws/saveFileToAws", {
                 fileData: photoBase64,
                 key: s3Key,
                 contentType: MimeType.WEBP,
                 fileName: fileName,
-                notes: `Image uploaded via JC_ModalPhotos`
+                notes: `Image uploaded via JC_ModalPhotos`,
             });
 
             if (result.success) {
@@ -381,7 +471,12 @@ export default function JC_ModalPhotos(
         }
     };
 
-    const handleImageSelect = (image: { fileId: string; signedUrl: string; fileName: string; fileModel: FileModel }) => {
+    const handleImageSelect = (image: {
+        fileId: string;
+        signedUrl: string;
+        fileName: string;
+        fileModel: FileModel;
+    }) => {
         setSelectedImage(image);
         setIsEditingImage(false); // Exit edit mode when selecting a new image
     };
@@ -394,12 +489,22 @@ export default function JC_ModalPhotos(
         setIsEditingImage(false);
     };
 
-    const handleSaveAnnotatedImage = async (annotations: Annotation[], createNew?: boolean, fileId?: string) => {
+    const handleSaveAnnotatedImage = async (
+        annotations: Annotation[],
+        createNew?: boolean,
+        fileId?: string,
+    ) => {
         if (!selectedImage) return;
 
         setIsSavingAnnotation(true);
         try {
-            let result: { success: boolean; fileId: string; fileName: string; key: string; message: string };
+            let result: {
+                success: boolean;
+                fileId: string;
+                fileName: string;
+                key: string;
+                message: string;
+            };
 
             if (fileId) {
                 // Frontend-merged image was already uploaded, just use the fileId
@@ -408,12 +513,18 @@ export default function JC_ModalPhotos(
                     fileId: fileId,
                     fileName: `annotated-${fileId}.webp`,
                     key: `Inspection Report/Images/annotated-${fileId}.webp`,
-                    message: createNew ? "New annotated image created successfully" : "Image annotations updated successfully"
+                    message: createNew
+                        ? "New annotated image created successfully"
+                        : "Image annotations updated successfully",
                 };
             } else {
                 // This should not happen anymore - all annotation rendering should be done on frontend
-                console.error("No fileId provided - frontend should always render annotations as pixels");
-                JC_Utils.showToastError("Error: Annotations must be rendered on frontend");
+                console.error(
+                    "No fileId provided - frontend should always render annotations as pixels",
+                );
+                JC_Utils.showToastError(
+                    "Error: Annotations must be rendered on frontend",
+                );
                 return;
             }
 
@@ -424,15 +535,19 @@ export default function JC_ModalPhotos(
                 if (createNew) {
                     // Notify parent component that a new image was created
                     await _.onImageUploaded(result.fileId, result.fileName);
-                    JC_Utils.showToastSuccess("New annotated image created successfully");
+                    JC_Utils.showToastSuccess(
+                        "New annotated image created successfully",
+                    );
 
                     // Reload images to get the new image
                     await loadImages();
 
                     // After loading, find and select the newly created image
                     setTimeout(() => {
-                        setImages(currentImages => {
-                            const newImage = currentImages.find(img => img.fileId === result.fileId);
+                        setImages((currentImages) => {
+                            const newImage = currentImages.find(
+                                (img) => img.fileId === result.fileId,
+                            );
                             if (newImage) {
                                 setSelectedImage(newImage);
                             }
@@ -440,7 +555,9 @@ export default function JC_ModalPhotos(
                         });
                     }, 100); // Small delay to ensure images are loaded
                 } else {
-                    JC_Utils.showToastSuccess("Annotated image saved successfully");
+                    JC_Utils.showToastSuccess(
+                        "Annotated image saved successfully",
+                    );
 
                     // For existing image updates, reload images but keep current selection
                     const currentSelectedId = selectedImage.fileId;
@@ -448,8 +565,10 @@ export default function JC_ModalPhotos(
 
                     // Restore selection to the updated image
                     setTimeout(() => {
-                        setImages(currentImages => {
-                            const updatedImage = currentImages.find(img => img.fileId === currentSelectedId);
+                        setImages((currentImages) => {
+                            const updatedImage = currentImages.find(
+                                (img) => img.fileId === currentSelectedId,
+                            );
                             if (updatedImage) {
                                 setSelectedImage(updatedImage);
                             }
@@ -470,11 +589,15 @@ export default function JC_ModalPhotos(
     const handleMoveImageUp = () => {
         if (!selectedImage || images.length <= 1) return;
 
-        const currentIndex = images.findIndex(img => img.fileId === selectedImage.fileId);
+        const currentIndex = images.findIndex(
+            (img) => img.fileId === selectedImage.fileId,
+        );
         if (currentIndex <= 0) return;
 
         // Find the current file in the files array
-        const currentFileIndex = _.files.findIndex(f => f.FileId === selectedImage.fileId);
+        const currentFileIndex = _.files.findIndex(
+            (f) => f.FileId === selectedImage.fileId,
+        );
         if (currentFileIndex <= 0) return;
 
         // Store the current selected image fileId for re-selection after reload
@@ -485,7 +608,8 @@ export default function JC_ModalPhotos(
 
         // Swap sort orders with the previous file
         const tempSortOrder = updatedFiles[currentFileIndex].SortOrder;
-        updatedFiles[currentFileIndex].SortOrder = updatedFiles[currentFileIndex - 1].SortOrder;
+        updatedFiles[currentFileIndex].SortOrder =
+            updatedFiles[currentFileIndex - 1].SortOrder;
         updatedFiles[currentFileIndex - 1].SortOrder = tempSortOrder;
 
         // Sort the array by SortOrder to maintain proper order
@@ -503,11 +627,15 @@ export default function JC_ModalPhotos(
     const handleMoveImageDown = () => {
         if (!selectedImage || images.length <= 1) return;
 
-        const currentIndex = images.findIndex(img => img.fileId === selectedImage.fileId);
+        const currentIndex = images.findIndex(
+            (img) => img.fileId === selectedImage.fileId,
+        );
         if (currentIndex >= images.length - 1) return;
 
         // Find the current file in the files array
-        const currentFileIndex = _.files.findIndex(f => f.FileId === selectedImage.fileId);
+        const currentFileIndex = _.files.findIndex(
+            (f) => f.FileId === selectedImage.fileId,
+        );
         if (currentFileIndex >= _.files.length - 1) return;
 
         // Store the current selected image fileId for re-selection after reload
@@ -518,7 +646,8 @@ export default function JC_ModalPhotos(
 
         // Swap sort orders with the next file
         const tempSortOrder = updatedFiles[currentFileIndex].SortOrder;
-        updatedFiles[currentFileIndex].SortOrder = updatedFiles[currentFileIndex + 1].SortOrder;
+        updatedFiles[currentFileIndex].SortOrder =
+            updatedFiles[currentFileIndex + 1].SortOrder;
         updatedFiles[currentFileIndex + 1].SortOrder = tempSortOrder;
 
         // Sort the array by SortOrder to maintain proper order
@@ -540,57 +669,206 @@ export default function JC_ModalPhotos(
             <div className={styles.blackOverlay} onClick={_.onCancel} />
             <div className={styles.modalContainer}>
                 <div className={styles.closeButton} onClick={_.onCancel}>
-                    <Image src="/icons/Cross.webp" alt="Close" width={16} height={16} />
+                    <Image
+                        src="/icons/Cross.webp"
+                        alt="Close"
+                        width={16}
+                        height={16}
+                    />
                 </div>
                 {_.title && <JC_Title title={_.title} />}
                 <div className={styles.bodyContent}>
                     <div className={styles.mainContent}>
                         {/* Selected Image Pane */}
-                        <div className={`${styles.selectedImagePane} selectedImagePane`}>
+                        <div
+                            className={`${styles.selectedImagePane} selectedImagePane`}
+                        >
                             {isLoading ? (
                                 <JC_Spinner />
                             ) : isSaving || isSavingAnnotation ? (
                                 <div className={styles.savingContainer}>
                                     <JC_Spinner />
-                                    <div className={styles.savingText}>{isSavingAnnotation ? "Saving annotated image..." : "Saving photo..."}</div>
+                                    <div className={styles.savingText}>
+                                        {isSavingAnnotation
+                                            ? "Saving annotated image..."
+                                            : "Saving photo..."}
+                                    </div>
                                 </div>
                             ) : selectedImage?.signedUrl ? (
                                 <React.Fragment>
                                     {isEditingImage ? (
-                                        <JC_ImageAnnotator imageUrl={selectedImage.signedUrl} onSave={handleSaveAnnotatedImage} onCancel={handleCancelEdit} isSaving={isSavingAnnotation} currentFileId={selectedImage.fileId} onSavingStateChange={setIsSavingAnnotation} />
+                                        <JC_ImageAnnotator
+                                            imageUrl={selectedImage.signedUrl}
+                                            onSave={handleSaveAnnotatedImage}
+                                            onCancel={handleCancelEdit}
+                                            isSaving={isSavingAnnotation}
+                                            currentFileId={selectedImage.fileId}
+                                            onSavingStateChange={
+                                                setIsSavingAnnotation
+                                            }
+                                        />
                                     ) : (
                                         <React.Fragment>
-                                            <Image ref={selectedImageRef} src={selectedImage.signedUrl} alt="Selected Image" width={0} height={0} className={styles.selectedImage} unoptimized />
-                                            <div className={styles.imageActions}>
-                                                <button className={styles.deleteButton} onClick={handleDeleteImage} disabled={isDeleting} title="Delete this image">
+                                            <Image
+                                                ref={selectedImageRef}
+                                                src={selectedImage.signedUrl}
+                                                alt="Selected Image"
+                                                width={0}
+                                                height={0}
+                                                className={styles.selectedImage}
+                                                unoptimized
+                                            />
+                                            <div
+                                                className={styles.imageActions}
+                                            >
+                                                <button
+                                                    className={
+                                                        styles.deleteButton
+                                                    }
+                                                    onClick={handleDeleteImage}
+                                                    disabled={isDeleting}
+                                                    title="Delete this image"
+                                                >
                                                     ×
                                                 </button>
-                                                <button className={styles.editButton} onClick={handleEditImage} title="Annotate this image">
+                                                <button
+                                                    className={
+                                                        styles.editButton
+                                                    }
+                                                    onClick={handleEditImage}
+                                                    title="Annotate this image"
+                                                >
                                                     ✏️
                                                 </button>
-                                                <button className={styles.moveUpButton} onClick={handleMoveImageUp} disabled={!selectedImage || images.findIndex(img => img.fileId === selectedImage.fileId) === 0} title="Move image up">
-                                                    <Image src="/icons/Arrow.webp" alt="Move Up" width={16} height={16} className={styles.upArrow} unoptimized />
+                                                <button
+                                                    className={
+                                                        styles.moveUpButton
+                                                    }
+                                                    onClick={handleMoveImageUp}
+                                                    disabled={
+                                                        !selectedImage ||
+                                                        images.findIndex(
+                                                            (img) =>
+                                                                img.fileId ===
+                                                                selectedImage.fileId,
+                                                        ) === 0
+                                                    }
+                                                    title="Move image up"
+                                                >
+                                                    <Image
+                                                        src="/icons/Arrow.webp"
+                                                        alt="Move Up"
+                                                        width={16}
+                                                        height={16}
+                                                        className={
+                                                            styles.upArrow
+                                                        }
+                                                        unoptimized
+                                                    />
                                                 </button>
-                                                <button className={styles.moveDownButton} onClick={handleMoveImageDown} disabled={!selectedImage || images.findIndex(img => img.fileId === selectedImage.fileId) === images.length - 1} title="Move image down">
-                                                    <Image src="/icons/Arrow.webp" alt="Move Down" width={16} height={16} className={styles.downArrow} unoptimized />
+                                                <button
+                                                    className={
+                                                        styles.moveDownButton
+                                                    }
+                                                    onClick={
+                                                        handleMoveImageDown
+                                                    }
+                                                    disabled={
+                                                        !selectedImage ||
+                                                        images.findIndex(
+                                                            (img) =>
+                                                                img.fileId ===
+                                                                selectedImage.fileId,
+                                                        ) ===
+                                                            images.length - 1
+                                                    }
+                                                    title="Move image down"
+                                                >
+                                                    <Image
+                                                        src="/icons/Arrow.webp"
+                                                        alt="Move Down"
+                                                        width={16}
+                                                        height={16}
+                                                        className={
+                                                            styles.downArrow
+                                                        }
+                                                        unoptimized
+                                                    />
                                                 </button>
                                             </div>
                                         </React.Fragment>
                                     )}
                                 </React.Fragment>
                             ) : (
-                                <div className={styles.noImageSelected}>No images yet</div>
+                                <div className={styles.noImageSelected}>
+                                    No images yet
+                                </div>
                             )}
                         </div>
 
                         {/* Images List Pane */}
-                        <div className={`${styles.imagesListPane} imagesListPane`}>
-                            <div className={styles.imagesList} ref={imagesListRef}>
-                                {images.map(image => {
-                                    const isSelected = selectedImage?.fileId === image.fileId;
+                        <div
+                            className={`${styles.imagesListPane} imagesListPane`}
+                        >
+                            <div
+                                className={styles.imagesList}
+                                ref={imagesListRef}
+                            >
+                                {images.map((image) => {
+                                    const isSelected =
+                                        selectedImage?.fileId === image.fileId;
                                     return (
-                                        <div key={image.fileId} className={`${styles.imageListItem} ${isSelected ? styles.selected : ""} ${isSelected ? styles.notClickable : ""}`} onClick={isSelected ? undefined : () => handleImageSelect(image)}>
-                                            {image.signedUrl ? <Image src={image.signedUrl} alt={image.fileName} width={0} height={0} className={styles.listImage} unoptimized /> : <div className={styles.noImagePlaceholder}>No Image</div>}
+                                        <div
+                                            key={image.fileId}
+                                            className={`${styles.imageListItem} ${isSelected ? styles.selected : ""} ${isSelected ? styles.notClickable : ""}`}
+                                            onClick={
+                                                isSelected
+                                                    ? undefined
+                                                    : () =>
+                                                          handleImageSelect(
+                                                              image,
+                                                          )
+                                            }
+                                        >
+                                            {image.signedUrl ? (
+                                                <Image
+                                                    src={image.signedUrl}
+                                                    alt={image.fileName}
+                                                    width={0}
+                                                    height={0}
+                                                    className={styles.listImage}
+                                                    unoptimized
+                                                />
+                                            ) : (
+                                                <div
+                                                    className={
+                                                        styles.noImagePlaceholder
+                                                    }
+                                                >
+                                                    <svg
+                                                        width="150px"
+                                                        height="150px"
+                                                        viewBox="0 0 1024 1024"
+                                                        class="icon"
+                                                        version="1.1"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z"
+                                                            fill="#E73B37"
+                                                        />
+                                                        <path
+                                                            d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z"
+                                                            fill="#539fc1"
+                                                        />
+                                                        <path
+                                                            d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z"
+                                                            fill="#E73B37"
+                                                        />
+                                                    </svg>
+                                                    No Image
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -600,25 +878,101 @@ export default function JC_ModalPhotos(
                 </div>
 
                 {/* Hidden file input for camera */}
-                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: "none" }} />
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                />
 
                 {/* Hidden file input for gallery */}
-                <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryChange} style={{ display: "none" }} />
+                <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryChange}
+                    style={{ display: "none" }}
+                />
 
                 {/* Footer */}
                 <div className={styles.footer}>
                     <div className={styles.footerLeft}>
-                        <div className={styles.galleryIconContainer} onClick={handleGallery} style={{ opacity: isCapturingPhoto ? 0.6 : 1, pointerEvents: isCapturingPhoto ? "none" : "auto" }}>
-                            <div className={styles.galleryIcon}>🖼️</div>
+                        <div
+                            className={styles.galleryIconContainer}
+                            onClick={handleGallery}
+                            style={{
+                                opacity: isCapturingPhoto ? 0.6 : 1,
+                                pointerEvents: isCapturingPhoto
+                                    ? "none"
+                                    : "auto",
+                            }}
+                        >
+                            <div className={styles.galleryIcon}>
+                                <svg
+                                    width="25px"
+                                    height="25px"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        opacity="0.5"
+                                        d="M21.9998 12.6978C21.9983 14.1674 21.9871 15.4165 21.9036 16.4414C21.8067 17.6308 21.6081 18.6246 21.1636 19.45C20.9676 19.814 20.7267 20.1401 20.4334 20.4334C19.601 21.2657 18.5405 21.6428 17.1966 21.8235C15.8835 22 14.2007 22 12.0534 22H11.9466C9.79929 22 8.11646 22 6.80345 21.8235C5.45951 21.6428 4.39902 21.2657 3.56664 20.4334C2.82871 19.6954 2.44763 18.777 2.24498 17.6376C2.04591 16.5184 2.00949 15.1259 2.00192 13.3967C2 12.9569 2 12.4917 2 12.0009V11.9466C1.99999 9.79929 1.99998 8.11646 2.17651 6.80345C2.3572 5.45951 2.73426 4.39902 3.56664 3.56664C4.39902 2.73426 5.45951 2.3572 6.80345 2.17651C7.97111 2.01952 9.47346 2.00215 11.302 2.00024C11.6873 1.99983 12 2.31236 12 2.69767C12 3.08299 11.6872 3.3952 11.3019 3.39561C9.44749 3.39757 8.06751 3.41446 6.98937 3.55941C5.80016 3.7193 5.08321 4.02339 4.5533 4.5533C4.02339 5.08321 3.7193 5.80016 3.55941 6.98937C3.39683 8.19866 3.39535 9.7877 3.39535 12C3.39535 12.2702 3.39535 12.5314 3.39567 12.7844L4.32696 11.9696C5.17465 11.2278 6.45225 11.2704 7.24872 12.0668L11.2392 16.0573C11.8785 16.6966 12.8848 16.7837 13.6245 16.2639L13.9019 16.0689C14.9663 15.3209 16.4064 15.4076 17.3734 16.2779L20.0064 18.6476C20.2714 18.091 20.4288 17.3597 20.5128 16.3281C20.592 15.3561 20.6029 14.1755 20.6044 12.6979C20.6048 12.3126 20.917 12 21.3023 12C21.6876 12 22.0002 12.3125 21.9998 12.6978Z"
+                                        fill="#539fc1"
+                                    />
+                                    <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M17.5 11C15.3787 11 14.318 11 13.659 10.341C13 9.68198 13 8.62132 13 6.5C13 4.37868 13 3.31802 13.659 2.65901C14.318 2 15.3787 2 17.5 2C19.6213 2 20.682 2 21.341 2.65901C22 3.31802 22 4.37868 22 6.5C22 8.62132 22 9.68198 21.341 10.341C20.682 11 19.6213 11 17.5 11ZM19.7121 4.28794C20.096 4.67187 20.096 5.29434 19.7121 5.67826L19.6542 5.7361C19.5984 5.7919 19.5205 5.81718 19.4428 5.80324C19.3939 5.79447 19.3225 5.77822 19.2372 5.74864C19.0668 5.68949 18.843 5.5778 18.6326 5.36742C18.4222 5.15704 18.3105 4.93324 18.2514 4.76276C18.2218 4.67751 18.2055 4.60607 18.1968 4.55721C18.1828 4.47953 18.2081 4.40158 18.2639 4.34578L18.3217 4.28794C18.7057 3.90402 19.3281 3.90402 19.7121 4.28794ZM17.35 8.0403C17.2057 8.18459 17.1336 8.25673 17.054 8.31878C16.9602 8.39197 16.8587 8.45472 16.7512 8.50591C16.6602 8.54932 16.5634 8.58158 16.3698 8.64611L15.349 8.98639C15.2537 9.01814 15.1487 8.99335 15.0777 8.92234C15.0067 8.85134 14.9819 8.74631 15.0136 8.65104L15.3539 7.63021C15.4184 7.43662 15.4507 7.33983 15.4941 7.24876C15.5453 7.14133 15.608 7.0398 15.6812 6.94596C15.7433 6.86642 15.8154 6.79427 15.9597 6.65L17.7585 4.85116C17.802 4.80767 17.8769 4.82757 17.8971 4.88568C17.9707 5.09801 18.109 5.37421 18.3674 5.63258C18.6258 5.89095 18.902 6.02926 19.1143 6.10292C19.1724 6.12308 19.1923 6.19799 19.1488 6.24148L17.35 8.0403Z"
+                                        fill="#539fc1"
+                                    />
+                                </svg>
+                            </div>
                             <span className={styles.galleryText}>Gallery</span>
                         </div>
-                        <div className={styles.cameraIconContainer} onClick={handleTakePhoto} style={{ opacity: isCapturingPhoto ? 0.6 : 1, pointerEvents: isCapturingPhoto ? "none" : "auto" }}>
-                            <div className={styles.cameraIcon}>📷</div>
-                            <span className={styles.cameraText}>{isCapturingPhoto ? "Processing Photo..." : "Take Photo"}</span>
+                        <div
+                            className={styles.cameraIconContainer}
+                            onClick={handleTakePhoto}
+                            style={{
+                                opacity: isCapturingPhoto ? 0.6 : 1,
+                                pointerEvents: isCapturingPhoto
+                                    ? "none"
+                                    : "auto",
+                            }}
+                        >
+                            <div className={styles.cameraIcon}>
+                                <svg
+                                    style={{ position: "relative", top: "5px" }}
+                                    className="take-photo"
+                                    fill="#000000"
+                                    width="30px"
+                                    height="30px"
+                                    viewBox="0 0 32 32"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path d="M16 12.906a4.47 4.47 0 0 0 0 8.938 4.47 4.47 0 0 0 4.469-4.469A4.47 4.47 0 0 0 16 12.906zm0 7.063a2.577 2.577 0 1 1-.002-5.154A2.577 2.577 0 0 1 16 19.969z" />
+                                    <path
+                                        d="M25.625 9.812h-4.812l-2.062-2.75h-5.5l-2.062 2.75H6.375C5.618 9.812 5 10.43 5 11.188v12.375c0 .756.618 1.375 1.375 1.375h19.25c.757 0 1.375-.617 1.375-1.375V11.188c0-.758-.618-1.376-1.375-1.376zM16 23.477a6.103 6.103 0 1 1 .001-12.205A6.103 6.103 0 0 1 16 23.477zm9.625-10.399h-2.75v-1.375h2.75v1.375z"
+                                        fill="#539fc1"
+                                    />
+                                </svg>
+                            </div>
+                            <span className={styles.cameraText}>
+                                {isCapturingPhoto
+                                    ? "Processing Photo..."
+                                    : "Take Photo"}
+                            </span>
                         </div>
                     </div>
                     <div className={styles.footerRight}>
-                        <JC_Button text="Close" onClick={_.onCancel} isDisabled={isCapturingPhoto || isSaving} />
+                        <JC_Button
+                            text="Close"
+                            onClick={_.onCancel}
+                            isDisabled={isCapturingPhoto || isSaving}
+                        />
                     </div>
                 </div>
             </div>
@@ -632,8 +986,8 @@ export default function JC_ModalPhotos(
                 submitButtons={[
                     {
                         text: "Delete",
-                        onSubmit: handleConfirmedDelete
-                    }
+                        onSubmit: handleConfirmedDelete,
+                    },
                 ]}
                 isLoading={isDeleting}
             />

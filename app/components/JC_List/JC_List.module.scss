@@ -60,6 +60,7 @@ $rowHeight: 40px;
             height: $rowHeight;
             box-sizing: border-box;
             overflow: visible;
+            color: $white;
         }
 
         th {
@@ -86,6 +87,7 @@ $rowHeight: 40px;
                     height: max-content;
                     display: inline-block;
                     text-align: center;
+                    color: $white;
                 }
 
                 .sortIndicator {
