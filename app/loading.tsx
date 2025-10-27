@@ -11,6 +11,7 @@ export default function RouteLoading() {
           borderTopColor: "currentColor",
           animation: "spin 0.8s linear infinite",
         }}
+        className="loadthis"
       />
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
