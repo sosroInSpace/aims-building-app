@@ -296,7 +296,6 @@ export default function Page_Account() {
                                         <div
                                             style={{
                                                 fontSize: "12px",
-                                                color: "#666",
                                                 marginTop: "5px",
                                                 color: "#FFF",
                                             }}
