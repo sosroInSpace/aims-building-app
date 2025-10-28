@@ -11,13 +11,15 @@ export default function JC_Checkbox(
         onChange?: () => void;
         disabled?: boolean;
         readOnly?: boolean;
-    }>
+    }>,
 ) {
     // Handle click with readOnly check
     const handleClick = () => {
         if (_.readOnly) return; // Don't trigger onChange if readOnly
         if (_.onChange) _.onChange();
     };
+
+    const color = "#fff";
 
     return (
         <div
@@ -28,8 +30,12 @@ export default function JC_Checkbox(
             `}
             onClick={handleClick}
         >
-            <div className={styles.checkbox}>{_.checked && <div className={styles.innerCheckedSquare} />}</div>
-            {!JC_Utils.stringNullOrEmpty(_.label) && <label>{_.label}</label>}
+            <div className={styles.checkbox}>
+                {_.checked && <div className={styles.innerCheckedSquare} />}
+            </div>
+            {!JC_Utils.stringNullOrEmpty(_.label) && (
+                <label style={{ color: color }}>{_.label}</label>
+            )}
         </div>
     );
 }

@@ -33,7 +33,15 @@ export default function Page_TwoFactorAuth() {
 
         // Focus on input if not mobile
         if (!JC_Utils.isOnMobile()) {
-            setTimeout(() => (document.getElementById("twofa-code-input") as HTMLInputElement)?.select(), 0);
+            setTimeout(
+                () =>
+                    (
+                        document.getElementById(
+                            "twofa-code-input",
+                        ) as HTMLInputElement
+                    )?.select(),
+                0,
+            );
         }
 
         // Start cooldown timer if needed
@@ -66,7 +74,9 @@ export default function Page_TwoFactorAuth() {
 
             if (result.error) {
                 if (result.error === "invalid_2fa_code") {
-                    setErrorMessage("Invalid or expired code. Please try again.");
+                    setErrorMessage(
+                        "Invalid or expired code. Please try again.",
+                    );
                 } else if (result.error === "two_factor_required") {
                     setErrorMessage("Two-factor authentication required.");
                 } else {
@@ -116,7 +126,10 @@ export default function Page_TwoFactorAuth() {
                 <JC_Title title="Two-Factor Authentication" />
 
                 {/* Description */}
-                <div className={styles.description}>We&apos;ve sent a 6-digit verification code to your email address. Please enter it below to complete your login.</div>
+                <div className={styles.description}>
+                    We&apos;ve sent a 6-digit verification code to your email
+                    address. Please enter it below to complete your login.
+                </div>
 
                 {/* Form */}
                 <JC_Form
@@ -131,18 +144,33 @@ export default function Page_TwoFactorAuth() {
                             type: FieldTypeEnum.Text,
                             label: "Verification Code",
                             placeholder: "000000",
-                            onChange: newValue => setTwoFactorCode(newValue.replace(/\D/g, "").slice(0, 6)),
+                            onChange: (newValue) =>
+                                setTwoFactorCode(
+                                    newValue.replace(/\D/g, "").slice(0, 6),
+                                ),
                             value: twoFactorCode,
-                            validate: (v: any) => (JC_Utils.stringNullOrEmpty(v) ? "Enter the verification code." : v.length !== 6 ? "Code must be 6 digits." : "")
-                        }
+                            validate: (v: any) =>
+                                JC_Utils.stringNullOrEmpty(v)
+                                    ? "Enter the verification code."
+                                    : v.length !== 6
+                                      ? "Code must be 6 digits."
+                                      : "",
+                        },
                     ]}
                 />
 
                 {/* Resend Container */}
                 <div className={styles.resendContainer}>
-                    <div className={styles.resendText}>Didn&apos;t receive the code?</div>
-                    <div className={`${styles.smallTextButton} ${resendCooldown > 0 ? "disabled" : ""}`} onClick={resendCooldown > 0 ? undefined : resendCode}>
-                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                    <div className={styles.resendText}>
+                        Didn&apos;t receive the code?
+                    </div>
+                    <div
+                        className={`${styles.smallTextButton} ${resendCooldown > 0 ? "disabled" : ""}`}
+                        onClick={resendCooldown > 0 ? undefined : resendCode}
+                    >
+                        {resendCooldown > 0
+                            ? `Resend in ${resendCooldown}s`
+                            : "Resend Code"}
                     </div>
                 </div>
 
