@@ -11,6 +11,7 @@ export default function JC_Checkbox(
         onChange?: () => void;
         disabled?: boolean;
         readOnly?: boolean;
+        color?: string;
     }>,
 ) {
     // Handle click with readOnly check
@@ -19,7 +20,7 @@ export default function JC_Checkbox(
         if (_.onChange) _.onChange();
     };
 
-    const color = "#fff";
+    const color = _.color ?? "#fff"; // fallback to white if not passed
 
     return (
         <div
