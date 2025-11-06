@@ -57,11 +57,65 @@ export class CustomerModel extends _Base implements _ModelRequirements {
     static async GetList(paging?: JC_ListPagingModel, abortSignal?: AbortSignal) {
         return await JC_GetList<CustomerModel>(CustomerModel, `${CustomerModel.apiRoute}/getList`, paging, {}, abortSignal);
     }
+    static async GetListWithDefectCounts(sortField?: string, sortAsc?: boolean) {
+        const { JC_GetRawCached } = await import("../apiServices/JC_GetRaw");
+        const params = {
+            sortField: sortField || "ModifiedAt",
+            sortAsc: sortAsc !== undefined ? sortAsc.toString() : "false"
+        };
+        const cacheKey = `Customer_getListWithDefectCounts_${JSON.stringify(params)}`;
+        return await JC_GetRawCached<(CustomerModel & { DefectCount: number })[]>(`${CustomerModel.apiRoute}/getListWithDefectCounts`, params, cacheKey, CustomerModel.cacheMinutes_getList);
+    }
+    static async GetSummaryData(customerId: string) {
+        const { JC_GetRawCached } = await import("../apiServices/JC_GetRaw");
+        const params = { customerId };
+        const cacheKey = `Customer_getSummaryData_${customerId}`;
+        return await JC_GetRawCached<
+            CustomerModel & {
+                OverallConditionOptions: any[];
+                FurtherInspectionsOptions: any[];
+                ObstructionsOptions: any[];
+                InaccessibleAreasOptions: any[];
+                AreasInspectedOptions: any[];
+                RiskOfUndetectedDefectsOptions: any[];
+            }
+        >(`${CustomerModel.apiRoute}/getSummaryData`, params, cacheKey, CustomerModel.cacheMinutes_get);
+    }
+    static async GetPropertyData(customerId: string) {
+        const { JC_GetRawCached } = await import("../apiServices/JC_GetRaw");
+        const params = { customerId };
+        const cacheKey = `Customer_getPropertyData_${customerId}`;
+        return await JC_GetRawCached<
+            CustomerModel & {
+                BuildingTypeOptions: any[];
+                OrientationOptions: any[];
+                NumBedroomsOptions: any[];
+                StoreysOptions: any[];
+                FurnishedOptions: any[];
+                OccupiedOptions: any[];
+                FloorOptions: any[];
+                OtherBuildingElementsOptions: any[];
+                OtherTimberBldgElementsOptions: any[];
+                RoofOptions: any[];
+                WallsOptions: any[];
+                WeatherOptions: any[];
+            }
+        >(`${CustomerModel.apiRoute}/getPropertyData`, params, cacheKey, CustomerModel.cacheMinutes_get);
+    }
     static async GetListForEmployees(paging?: JC_ListPagingModel, abortSignal?: AbortSignal) {
         return await JC_GetList<CustomerModel>(CustomerModel, `${CustomerModel.apiRoute}/getListForEmployees`, paging, {}, abortSignal);
     }
     static async GetListForEmployeesOfAdmin(paging?: JC_ListPagingModel, abortSignal?: AbortSignal) {
         return await JC_GetList<CustomerModel>(CustomerModel, `${CustomerModel.apiRoute}/getListForEmployeesOfAdmin`, paging, {}, abortSignal);
+    }
+    static async GetListForEmployeesWithDefectCounts(sortField?: string, sortAsc?: boolean) {
+        const { JC_GetRawCached } = await import("../apiServices/JC_GetRaw");
+        const params = {
+            sortField: sortField || "ModifiedAt",
+            sortAsc: sortAsc !== undefined ? sortAsc.toString() : "false"
+        };
+        const cacheKey = `Customer_getListForEmployeesWithDefectCounts_${JSON.stringify(params)}`;
+        return await JC_GetRawCached<(CustomerModel & { DefectCount: number })[]>(`${CustomerModel.apiRoute}/getListForEmployeesWithDefectCounts`, params, cacheKey, CustomerModel.cacheMinutes_getList);
     }
     static async Create(data: CustomerModel) {
         let response = await JC_Put<CustomerModel>(CustomerModel, CustomerModel.apiRoute, data);

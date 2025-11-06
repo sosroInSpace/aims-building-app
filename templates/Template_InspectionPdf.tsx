@@ -366,10 +366,13 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                     }
 
                     .pdf-footer-logo {
-                        height: 15mm;
+                        max-height: 20mm;
+                        max-width: 40mm;
                         width: auto;
+                        height: auto;
                         position: absolute;
                         left: 60px;
+                        object-fit: contain;
                     }
 
                     .pdf-footer-center-text {
@@ -786,7 +789,9 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                     .inspector-logo img {
                         max-width: 500px;
                         max-height: 200px;
+                        width: auto;
                         height: auto;
+                        object-fit: contain;
                     }
 
                     .inspector-hexagon {

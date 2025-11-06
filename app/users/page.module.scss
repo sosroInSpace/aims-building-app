@@ -293,3 +293,70 @@
     font-size: 12px;
     font-style: italic;
 }
+
+// Error button styling
+.errorButton {
+    background-color: $errorColor !important;
+
+    &:hover:not(.disabled) {
+        background-color: $lightErrorColor !important;
+    }
+}
+
+// Edit User Modal Styles
+.editUserModal {
+    max-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+}
+
+.editUserModalContent {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 200px); // Leave space for modal padding and title
+    min-height: 0; // Allow flex item to shrink
+}
+
+.editUserModalScrollableContent {
+    overflow-y: auto;
+    padding: 10px 0;
+    flex: 1;
+    min-height: 0; // Allow flex item to shrink
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    align-items: center;
+    @include hideScrollBar;
+}
+
+.editUserModalButtons {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-shrink: 0; // Keep buttons fixed at bottom
+}
+
+// Reset Password Button Styling
+.resetPasswordButton {
+    width: 200px !important;
+    min-width: 200px !important;
+    height: 44px !important;
+}
+
+// Responsive design for edit user modal buttons
+@media (max-width: $teenyTinyScreenSize) {
+    .editUserModalButtons {
+        flex-direction: column;
+        align-items: center;
+        row-gap: 25px;
+        column-gap: 0;
+    }
+
+    .resetPasswordButton {
+        width: 180px !important;
+        min-width: 180px !important;
+        height: 40px !important;
+    }
+}

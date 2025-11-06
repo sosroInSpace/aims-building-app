@@ -1,5 +1,8 @@
 "use client";
 
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { JC_Utils, JC_Utils_Dates } from "../Utils";
 import JC_Button from "../components/JC_Button/JC_Button";
 import JC_Form from "../components/JC_Form/JC_Form";
@@ -18,9 +21,6 @@ import { O_OverallConditionModel } from "../models/O_OverallCondition";
 import { O_RiskOfUndetectedDefectsModel } from "../models/O_RiskOfUndetectedDefects";
 import { O_SummaryModel } from "../models/O_Summary";
 import styles from "./page.module.scss";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
 
 export default function ReportSummaryPage() {
     const router = useRouter();
@@ -65,37 +65,31 @@ export default function ReportSummaryPage() {
     const [newAreasInspectedName, setNewAreasInspectedName] = useState("");
     const [newRiskOfUndetectedDefectsName, setNewRiskOfUndetectedDefectsName] = useState("");
 
-    // Load data
+    // Load data using optimized single SQL call
     const loadData = useCallback(async () => {
         try {
             setIsLoading(true);
             const selectedCustomerId = localStorage.getItem(LocalStorageKeyEnum.JC_SelectedCustomer);
 
-            // Load dropdown options
-            const optionPromises = [O_OverallConditionModel.GetList(), O_FurtherInspectionsModel.GetList(), O_ObstructionsModel.GetList(), O_InaccessibleAreasModel.GetList(), O_AreasInspectedModel.GetList(), O_RiskOfUndetectedDefectsModel.GetList()];
-
-            const optionResults = await Promise.all(optionPromises);
-
-            const [overallConditionResult, furtherInspectionsResult, obstructionsResult, inaccessibleAreasResult, areasInspectedResult, riskOfUndetectedDefectsResult] = optionResults;
-
-            setOverallConditionOptions(overallConditionResult.ResultList || []);
-            setFurtherInspectionsOptions(furtherInspectionsResult.ResultList || []);
-            setObstructionsOptions(obstructionsResult.ResultList || []);
-            setInaccessibleAreasOptions(inaccessibleAreasResult.ResultList || []);
-            setAreasInspectedOptions(areasInspectedResult.ResultList || []);
-            setRiskOfUndetectedDefectsOptions(riskOfUndetectedDefectsResult.ResultList || []);
-
             if (selectedCustomerId) {
-                // Check if this customer exists and is not deleted
-                const customerExists = await CustomerModel.ItemExists(selectedCustomerId);
+                try {
+                    // Use the optimized method that gets customer data and all options in one SQL call
+                    const summaryData = await CustomerModel.GetSummaryData(selectedCustomerId);
 
-                if (customerExists) {
-                    // Load customer data
-                    const customerData = await CustomerModel.Get(selectedCustomerId);
-                    setCurrentCustomer(customerData);
+                    // Set customer data
+                    setCurrentCustomer(new CustomerModel(summaryData));
                     setCustomerId(selectedCustomerId);
-                } else {
-                    // Customer doesn't exist or is deleted, clear localStorage
+
+                    // Set all option data from the single query
+                    setOverallConditionOptions(summaryData.OverallConditionOptions || []);
+                    setFurtherInspectionsOptions(summaryData.FurtherInspectionsOptions || []);
+                    setObstructionsOptions(summaryData.ObstructionsOptions || []);
+                    setInaccessibleAreasOptions(summaryData.InaccessibleAreasOptions || []);
+                    setAreasInspectedOptions(summaryData.AreasInspectedOptions || []);
+                    setRiskOfUndetectedDefectsOptions(summaryData.RiskOfUndetectedDefectsOptions || []);
+                } catch (error) {
+                    console.error("Error loading summary data:", error);
+                    // Customer doesn't exist or access denied, clear localStorage
                     localStorage.removeItem(LocalStorageKeyEnum.JC_SelectedCustomer);
                     setNoCustomerSelected(true);
                 }

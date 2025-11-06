@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Next.js: debug test env",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npx dotenv -e .env.test.local -- npm run dev"
+        },
+        {
+            "name": "Next.js: debug prod env",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npx dotenv -e .env.production.local -- npm run dev"
+        },
+        {
+            "name": "Next.js: debug prodnew env",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npx dotenv -e .env.productionnew.local -- npm run dev"
+        }
+    ]
+}

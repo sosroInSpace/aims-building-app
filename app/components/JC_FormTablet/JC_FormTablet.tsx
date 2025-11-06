@@ -61,13 +61,14 @@ export interface JC_FormTabletModel {
         field: JC_FieldModel,
         item: any
     ) => {
-        fileIds?: string[];
         files?: JC_ModalPhotosModel[];
         title: string;
-        onImageUploaded: (fileId: string, fileName: string) => void;
+        getFilesCallback: () => Promise<JC_ModalPhotosModel[]>;
+        onFinishedCallback: () => Promise<void>;
+        onSortOrderChanged?: (files: JC_ModalPhotosModel[]) => Promise<void>;
         onImageDeleted?: (fileId: string) => Promise<void>;
-        onSortOrderChanged?: (files: JC_ModalPhotosModel[]) => void;
-        onImagesUploaded?: () => Promise<JC_ModalPhotosModel[]>;
+        onImageUploaded?: (fileId: string, fileName: string) => Promise<void>;
+        s3KeyPath?: string;
     };
     customerId?: string;
     customer?: any; // Customer object to read/update CustomOrder field
@@ -122,13 +123,11 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
     const [photoModalTitle, setPhotoModalTitle] = useState<string>("Photos");
     const [photoModalFiles, setPhotoModalFiles] = useState<JC_ModalPhotosModel[]>([]);
     const [photoModalS3KeyPath, setPhotoModalS3KeyPath] = useState<string>("");
-    const [photoModalOnImageUploaded, setPhotoModalOnImageUploaded] = useState<((fileId: string, fileName: string) => void) | null>(null);
+    const [photoModalGetFilesCallback, setPhotoModalGetFilesCallback] = useState<(() => Promise<JC_ModalPhotosModel[]>) | null>(null);
+    const [photoModalOnFinishedCallback, setPhotoModalOnFinishedCallback] = useState<(() => Promise<void>) | null>(null);
+    const [photoModalOnSortOrderChanged, setPhotoModalOnSortOrderChanged] = useState<((files: JC_ModalPhotosModel[]) => Promise<void>) | null>(null);
     const [photoModalOnImageDeleted, setPhotoModalOnImageDeleted] = useState<((fileId: string) => Promise<void>) | null>(null);
-    const [photoModalOnSortOrderChanged, setPhotoModalOnSortOrderChanged] = useState<((files: JC_ModalPhotosModel[]) => void) | null>(null);
-    const [photoModalOnImagesUploaded, setPhotoModalOnImagesUploaded] = useState<(() => Promise<JC_ModalPhotosModel[]>) | null>(null);
-
-    // Track sort order counter for photo modal to handle multiple simultaneous uploads
-    const [photoModalSortOrderCounter, setPhotoModalSortOrderCounter] = useState<number>(0);
+    const [photoModalOnImageUploaded, setPhotoModalOnImageUploaded] = useState<((fileId: string, fileName: string) => Promise<void>) | null>(null);
 
     // Option Edit Modal state
     const [optionEditModalOpen, setOptionEditModalOpen] = useState<boolean>(false);
@@ -181,7 +180,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
         if (model.customer) {
             setUseCustomOrder(model.customer.CustomOrder !== false);
         }
-    }, [model.customer?.CustomOrder]);
+    }, [model.customer]);
 
     // Handle Custom Order checkbox change
     const handleCustomOrderChange = async () => {
@@ -209,85 +208,6 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                 setUseCustomOrder(!newValue);
                 JC_Utils.showToastError("Failed to save sort preference");
             }
-        }
-    };
-
-    // Handle image uploaded from photo modal
-    const handlePhotoModalImageUploaded = async (fileId: string, fileName: string) => {
-        try {
-            // Call the specific callback if provided
-            if (photoModalOnImageUploaded) {
-                photoModalOnImageUploaded(fileId, fileName);
-            }
-
-            // Add the new fileId to the current list with an incremented sort order
-            const nextSortOrder = photoModalSortOrderCounter + 1;
-            setPhotoModalSortOrderCounter(nextSortOrder);
-            setPhotoModalFiles(prev => [...prev, { FileId: fileId, SortOrder: nextSortOrder }]);
-
-            // Call the parent's onImageUploaded callback if provided
-            if (model.onImageUploaded) {
-                model.onImageUploaded();
-            }
-        } catch (error) {
-            console.error("Error handling image upload:", error);
-            JC_Utils.showToastError("Failed to handle image upload");
-        }
-    };
-
-    // Handle image deleted from photo modal
-    const handlePhotoModalImageDeleted = async (fileId: string) => {
-        try {
-            // Call the specific callback if provided
-            if (photoModalOnImageDeleted) {
-                await photoModalOnImageDeleted(fileId);
-            }
-
-            // Remove the fileId from the current list
-            setPhotoModalFiles(prev => prev.filter(file => file.FileId !== fileId));
-
-            // Call the parent's onImageUploaded callback if provided to refresh the UI
-            if (model.onImageUploaded) {
-                model.onImageUploaded();
-            }
-        } catch (error) {
-            console.error("Error handling image deletion:", error);
-            JC_Utils.showToastError("Failed to handle image deletion");
-            throw error; // Re-throw so the modal can handle the error
-        }
-    };
-
-    // Handle sort order changed from photo modal
-    const handlePhotoModalSortOrderChanged = (files: JC_ModalPhotosModel[]) => {
-        try {
-            // Update the local state
-            setPhotoModalFiles(files);
-
-            // Call the specific callback if provided
-            if (photoModalOnSortOrderChanged) {
-                photoModalOnSortOrderChanged(files);
-            }
-        } catch (error) {
-            console.error("Error handling sort order change:", error);
-            JC_Utils.showToastError("Failed to handle sort order change");
-        }
-    };
-
-    // Handle images uploaded from photo modal
-    const handlePhotoModalImagesUploaded = async () => {
-        try {
-            // Call the specific callback if provided and get updated files
-            if (photoModalOnImagesUploaded) {
-                const updatedFiles = await photoModalOnImagesUploaded();
-                // Update the modal files with the fresh data
-                setPhotoModalFiles(updatedFiles);
-                return updatedFiles;
-            }
-            return [];
-        } catch (error) {
-            console.error("Error handling images uploaded:", error);
-            JC_Utils.showToastError("Failed to handle images uploaded");
-            return [];
         }
     };
 
@@ -479,7 +399,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
         if (selectedField) {
             validateMultiSelectField(selectedField);
         }
-    }, [selectedFormListField, selectedFieldId, model.sections]);
+    }, [selectedFormListField, selectedFieldId, model.sections, tileStructure]);
 
     // Auto-select input for Text and Textarea fields when selected
     useEffect(() => {
@@ -496,7 +416,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                 }
             }, 0);
         }
-    }, [selectedFieldId]); // Only trigger when selectedFieldId changes, not when field value changes
+    }, [selectedFieldId, tileStructure]); // Only trigger when selectedFieldId changes, not when field value changes
 
     // Load modelConstructor options when selectedField changes
     useEffect(() => {
@@ -508,7 +428,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
         } else {
             setModelConstructorOptions([]);
         }
-    }, [selectedFieldId, model.sections]);
+    }, [selectedFieldId, model.sections, tileStructure]);
 
     // Check if field type supports inline editing - needed for useEffect
     const isInlineEditableField = (fieldType: FieldTypeEnum): boolean => {
@@ -1762,33 +1682,14 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                                                                                                 if (model.onPhotoFieldClick) {
                                                                                                     const photoData = model.onPhotoFieldClick(field, item);
 
-                                                                                                    // Handle both old fileIds format and new files format
-                                                                                                    if (photoData.files) {
-                                                                                                        setPhotoModalFiles(photoData.files);
-                                                                                                        // Initialize sort order counter with max sort order
-                                                                                                        const maxSortOrder = photoData.files.reduce((max, file) => Math.max(max, file.SortOrder), 0);
-                                                                                                        setPhotoModalSortOrderCounter(maxSortOrder);
-                                                                                                    } else if (photoData.fileIds) {
-                                                                                                        // Convert old fileIds format to new files format
-                                                                                                        const files = photoData.fileIds.map((fileId, index) => ({
-                                                                                                            FileId: fileId,
-                                                                                                            SortOrder: index + 1
-                                                                                                        }));
-                                                                                                        setPhotoModalFiles(files);
-                                                                                                        // Initialize sort order counter with max sort order
-                                                                                                        setPhotoModalSortOrderCounter(files.length);
-                                                                                                    } else {
-                                                                                                        setPhotoModalFiles([]);
-                                                                                                        // Reset sort order counter
-                                                                                                        setPhotoModalSortOrderCounter(0);
-                                                                                                    }
-
+                                                                                                    setPhotoModalFiles(photoData.files || []);
                                                                                                     setPhotoModalTitle(photoData.title);
-                                                                                                    setPhotoModalOnImageUploaded(() => photoData.onImageUploaded);
-                                                                                                    setPhotoModalOnImageDeleted(photoData.onImageDeleted ? () => photoData.onImageDeleted! : null);
+                                                                                                    setPhotoModalGetFilesCallback(() => photoData.getFilesCallback);
+                                                                                                    setPhotoModalOnFinishedCallback(() => photoData.onFinishedCallback);
                                                                                                     setPhotoModalOnSortOrderChanged(photoData.onSortOrderChanged ? () => photoData.onSortOrderChanged! : null);
-                                                                                                    setPhotoModalS3KeyPath(field.s3KeyPath || "");
-                                                                                                    setPhotoModalOnImagesUploaded(photoData.onImagesUploaded ? () => photoData.onImagesUploaded! : null);
+                                                                                                    setPhotoModalOnImageDeleted(photoData.onImageDeleted ? () => photoData.onImageDeleted! : null);
+                                                                                                    setPhotoModalOnImageUploaded(photoData.onImageUploaded ? () => photoData.onImageUploaded! : null);
+                                                                                                    setPhotoModalS3KeyPath(photoData.s3KeyPath || "");
                                                                                                     setIsPhotoModalOpen(true);
                                                                                                 }
                                                                                             }
@@ -2603,7 +2504,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
             </JC_Modal>
 
             {/* Photo Modal */}
-            <JC_ModalPhotos isOpen={isPhotoModalOpen} onCancel={() => setIsPhotoModalOpen(false)} title={photoModalTitle} files={photoModalFiles} onImageUploaded={handlePhotoModalImageUploaded} onImageDeleted={handlePhotoModalImageDeleted} onSortOrderChanged={handlePhotoModalSortOrderChanged} s3KeyPath={photoModalS3KeyPath} onImagesUploaded={handlePhotoModalImagesUploaded} />
+            <JC_ModalPhotos isOpen={isPhotoModalOpen} onCancel={() => setIsPhotoModalOpen(false)} title={photoModalTitle} files={photoModalFiles} getFilesCallback={photoModalGetFilesCallback || (() => Promise.resolve([]))} onFinishedCallback={photoModalOnFinishedCallback || (() => Promise.resolve())} onSortOrderChanged={photoModalOnSortOrderChanged || undefined} onImageDeleted={photoModalOnImageDeleted || undefined} onImageUploaded={photoModalOnImageUploaded || undefined} s3KeyPath={photoModalS3KeyPath} />
 
             {/* Option Edit Modal */}
             <JC_Modal isOpen={optionEditModalOpen} onCancel={handleOptionEditModalCancel} title="Edit Option">

@@ -61,191 +61,7 @@ export default function JC_ImageAnnotator(
     const [showSaveModal, setShowSaveModal] = useState(false);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
 
-    // Setup canvas overlay when image loads
-    useEffect(() => {
-        if (isImageLoaded && imageDimensions && overlayCanvasRef.current && containerRef.current) {
-            const canvas = overlayCanvasRef.current;
-            const container = containerRef.current;
-
-            // Set canvas size to match container
-            const rect = container.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            // Redraw all annotations
-            redrawAnnotations();
-        }
-    }, [isImageLoaded, imageDimensions, annotations, textInputValue, isTypingText, currentTool.size, pendingTextAnnotation]);
-
-    // Text handling functions
-    const handleTextSubmit = useCallback(() => {
-        if (pendingTextAnnotation && textInputValue.trim()) {
-            const newAnnotation: Annotation = {
-                ...pendingTextAnnotation,
-                text: textInputValue.trim(),
-                size: currentTool.size // Use current tool size when saving
-            };
-            setAnnotations(prev => [...prev, newAnnotation]);
-        }
-        setIsTypingText(false);
-        setTextInputValue("");
-        setPendingTextAnnotation(null);
-    }, [pendingTextAnnotation, textInputValue, currentTool.size]);
-
-    const handleTextCancel = useCallback(() => {
-        setIsTypingText(false);
-        setTextInputValue("");
-        setPendingTextAnnotation(null);
-    }, []);
-
-    // Add global mouse and touch event listeners to handle end events outside canvas
-    useEffect(() => {
-        const handleGlobalEnd = () => {
-            if (isDrawing) {
-                handleCanvasEnd();
-            }
-        };
-
-        if (isDrawing) {
-            document.addEventListener("mouseup", handleGlobalEnd);
-            document.addEventListener("touchend", handleGlobalEnd);
-            return () => {
-                document.removeEventListener("mouseup", handleGlobalEnd);
-                document.removeEventListener("touchend", handleGlobalEnd);
-            };
-        }
-    }, [isDrawing]);
-
-    // Add global click and touch listener to handle text deactivation when clicking/touching outside
-    useEffect(() => {
-        const handleGlobalInteraction = (event: MouseEvent | TouchEvent) => {
-            if (isTypingText && pendingTextAnnotation) {
-                // Check if the interaction was outside the canvas
-                const canvas = overlayCanvasRef.current;
-                const target = event.target as Node;
-                if (canvas && !canvas.contains(target)) {
-                    // Save the current text when clicking/touching outside
-                    handleTextSubmit();
-                }
-            }
-        };
-
-        if (isTypingText) {
-            document.addEventListener("click", handleGlobalInteraction);
-            document.addEventListener("touchstart", handleGlobalInteraction);
-            return () => {
-                document.removeEventListener("click", handleGlobalInteraction);
-                document.removeEventListener("touchstart", handleGlobalInteraction);
-            };
-        }
-    }, [isTypingText, pendingTextAnnotation, handleTextSubmit]);
-
-    // Focus hidden input when text mode is activated (for mobile keyboard)
-    useEffect(() => {
-        if (isTypingText && hiddenInputRef.current) {
-            // Small delay to ensure the input is rendered
-            setTimeout(() => {
-                hiddenInputRef.current?.focus();
-            }, 100);
-        }
-    }, [isTypingText]);
-
-    // Add keyboard event listeners for text input (fallback for desktop)
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (!isTypingText) return;
-
-            // Don't prevent default if the hidden input is focused (mobile)
-            if (document.activeElement === hiddenInputRef.current) {
-                return;
-            }
-
-            event.preventDefault(); // Prevent default browser behavior
-
-            if (event.key === "Escape") {
-                handleTextCancel();
-            } else if (event.key === "Backspace") {
-                setTextInputValue(prev => prev.slice(0, -1));
-            } else if (event.key.length === 1) {
-                // Only add printable characters
-                setTextInputValue(prev => prev + event.key);
-            }
-        };
-
-        if (isTypingText) {
-            document.addEventListener("keydown", handleKeyDown);
-            return () => {
-                document.removeEventListener("keydown", handleKeyDown);
-            };
-        }
-    }, [isTypingText, handleTextCancel]);
-
-    const handleImageLoad = () => {
-        if (imageRef.current) {
-            const img = imageRef.current;
-            setImageDimensions({
-                width: img.naturalWidth,
-                height: img.naturalHeight
-            });
-            setIsImageLoaded(true);
-        }
-    };
-
-    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        console.error("Image failed to load:", e);
-        console.error("Image URL:", _.imageUrl);
-    };
-
-    const redrawAnnotations = () => {
-        const canvas = overlayCanvasRef.current;
-        if (!canvas || !imageDimensions || !containerRef.current) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Calculate scale factors between image natural size and display size
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const scaleX = containerRect.width / imageDimensions.width;
-        const scaleY = containerRect.height / imageDimensions.height;
-        const scale = Math.min(scaleX, scaleY);
-
-        // Calculate image display position (centered)
-        const displayWidth = imageDimensions.width * scale;
-        const displayHeight = imageDimensions.height * scale;
-        const offsetX = (containerRect.width - displayWidth) / 2;
-        const offsetY = (containerRect.height - displayHeight) / 2;
-
-        // Draw all annotations scaled to display size
-        [...annotations, currentAnnotation].filter(Boolean).forEach(annotation => {
-            if (!annotation) return;
-            drawAnnotation(ctx, annotation, scale, offsetX, offsetY);
-        });
-
-        // Draw text preview
-        if (isTypingText && pendingTextAnnotation) {
-            const scaledX = pendingTextAnnotation.x * scale + offsetX;
-            const scaledY = pendingTextAnnotation.y * scale + offsetY;
-
-            if (textInputValue) {
-                // Draw the current text directly without background
-                const textAnnotation: Annotation = {
-                    ...pendingTextAnnotation,
-                    text: textInputValue,
-                    size: currentTool.size // Use current tool size
-                };
-                drawAnnotation(ctx, textAnnotation, scale, offsetX, offsetY);
-            } else {
-                // Draw grey box when no text has been entered yet
-                const boxSize = currentTool.size * scale * 1.5; // Same size as text would be
-                ctx.fillStyle = "rgba(128, 128, 128, 0.5)"; // Semi-transparent grey
-                ctx.fillRect(scaledX - 2, scaledY - boxSize / 2, boxSize, boxSize);
-            }
-        }
-    };
-
+    // Draw annotation function
     const drawAnnotation = (ctx: CanvasRenderingContext2D, annotation: Annotation, scale: number, offsetX: number, offsetY: number) => {
         ctx.strokeStyle = annotation.color;
         ctx.fillStyle = annotation.color;
@@ -347,6 +163,226 @@ export default function JC_ImageAnnotator(
                 }
                 break;
         }
+    };
+
+    // Redraw annotations function
+    const redrawAnnotations = useCallback(() => {
+        const canvas = overlayCanvasRef.current;
+        if (!canvas || !imageDimensions || !containerRef.current) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Calculate scale factors between image natural size and display size
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const scaleX = containerRect.width / imageDimensions.width;
+        const scaleY = containerRect.height / imageDimensions.height;
+        const scale = Math.min(scaleX, scaleY);
+
+        // Calculate image display position (centered)
+        const displayWidth = imageDimensions.width * scale;
+        const displayHeight = imageDimensions.height * scale;
+        const offsetX = (containerRect.width - displayWidth) / 2;
+        const offsetY = (containerRect.height - displayHeight) / 2;
+
+        // Draw all annotations scaled to display size
+        [...annotations, currentAnnotation].filter(Boolean).forEach(annotation => {
+            if (!annotation) return;
+            drawAnnotation(ctx, annotation, scale, offsetX, offsetY);
+        });
+
+        // Draw text preview
+        if (isTypingText && pendingTextAnnotation) {
+            const scaledX = pendingTextAnnotation.x * scale + offsetX;
+            const scaledY = pendingTextAnnotation.y * scale + offsetY;
+
+            if (textInputValue) {
+                // Draw the current text directly without background
+                const textAnnotation: Annotation = {
+                    ...pendingTextAnnotation,
+                    text: textInputValue,
+                    size: currentTool.size // Use current tool size
+                };
+                drawAnnotation(ctx, textAnnotation, scale, offsetX, offsetY);
+            } else {
+                // Draw grey box when no text has been entered yet
+                const boxSize = currentTool.size * scale * 1.5; // Same size as text would be
+                ctx.fillStyle = "rgba(128, 128, 128, 0.5)"; // Semi-transparent grey
+                ctx.fillRect(scaledX - 2, scaledY - boxSize / 2, boxSize, boxSize);
+            }
+        }
+    }, [imageDimensions, annotations, currentAnnotation, isTypingText, pendingTextAnnotation, textInputValue, currentTool.size]);
+
+    // Setup canvas overlay when image loads
+    useEffect(() => {
+        if (isImageLoaded && imageDimensions && overlayCanvasRef.current && containerRef.current) {
+            const canvas = overlayCanvasRef.current;
+            const container = containerRef.current;
+
+            // Set canvas size to match container
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Redraw all annotations
+            redrawAnnotations();
+        }
+    }, [isImageLoaded, imageDimensions, annotations, textInputValue, isTypingText, currentTool.size, pendingTextAnnotation, redrawAnnotations]);
+
+    // Text handling functions
+    const handleTextSubmit = useCallback(() => {
+        if (pendingTextAnnotation && textInputValue.trim()) {
+            const newAnnotation: Annotation = {
+                ...pendingTextAnnotation,
+                text: textInputValue.trim(),
+                size: currentTool.size // Use current tool size when saving
+            };
+            setAnnotations(prev => [...prev, newAnnotation]);
+        }
+        setIsTypingText(false);
+        setTextInputValue("");
+        setPendingTextAnnotation(null);
+    }, [pendingTextAnnotation, textInputValue, currentTool.size]);
+
+    const handleTextCancel = useCallback(() => {
+        setIsTypingText(false);
+        setTextInputValue("");
+        setPendingTextAnnotation(null);
+    }, []);
+
+    // Handle canvas end function
+    const handleCanvasEnd = useCallback(() => {
+        if (!isDrawing || !currentAnnotation) return;
+
+        // Only add annotation if it has meaningful size (at least 5 pixels in either direction)
+        const hasSize = currentAnnotation.width !== undefined && currentAnnotation.height !== undefined && (Math.abs(currentAnnotation.width) > 5 || Math.abs(currentAnnotation.height) > 5);
+
+        if (hasSize) {
+            // For completed annotations, preserve width/height for rectangles and arrows, convert others to fixed size
+            const finalAnnotation: Annotation = {
+                ...currentAnnotation,
+                // For rectangles (squares) and arrows, preserve the drawn dimensions
+                // For other shapes, convert to fixed size and remove width/height
+                ...(currentAnnotation.type === "square" || currentAnnotation.type === "arrow"
+                    ? {
+                          // Keep the drawn width and height for rectangles and arrows
+                          width: currentAnnotation.width,
+                          height: currentAnnotation.height
+                      }
+                    : {
+                          // For other shapes, use the larger dimension as the size and remove width/height
+                          size: currentAnnotation.width !== undefined && currentAnnotation.height !== undefined ? Math.max(Math.abs(currentAnnotation.width), Math.abs(currentAnnotation.height), currentTool.size) : currentTool.size,
+                          width: undefined,
+                          height: undefined
+                      })
+            };
+            setAnnotations(prev => [...prev, finalAnnotation]);
+        }
+
+        setIsDrawing(false);
+        setCurrentAnnotation(null);
+        setStartPoint(null);
+    }, [isDrawing, currentAnnotation, currentTool.size]);
+
+    // Add global mouse and touch event listeners to handle end events outside canvas
+    useEffect(() => {
+        const handleGlobalEnd = () => {
+            if (isDrawing) {
+                handleCanvasEnd();
+            }
+        };
+
+        if (isDrawing) {
+            document.addEventListener("mouseup", handleGlobalEnd);
+            document.addEventListener("touchend", handleGlobalEnd);
+            return () => {
+                document.removeEventListener("mouseup", handleGlobalEnd);
+                document.removeEventListener("touchend", handleGlobalEnd);
+            };
+        }
+    }, [isDrawing, handleCanvasEnd]);
+
+    // Add global click and touch listener to handle text deactivation when clicking/touching outside
+    useEffect(() => {
+        const handleGlobalInteraction = (event: MouseEvent | TouchEvent) => {
+            if (isTypingText && pendingTextAnnotation) {
+                // Check if the interaction was outside the canvas
+                const canvas = overlayCanvasRef.current;
+                const target = event.target as Node;
+                if (canvas && !canvas.contains(target)) {
+                    // Save the current text when clicking/touching outside
+                    handleTextSubmit();
+                }
+            }
+        };
+
+        if (isTypingText) {
+            document.addEventListener("click", handleGlobalInteraction);
+            document.addEventListener("touchstart", handleGlobalInteraction);
+            return () => {
+                document.removeEventListener("click", handleGlobalInteraction);
+                document.removeEventListener("touchstart", handleGlobalInteraction);
+            };
+        }
+    }, [isTypingText, pendingTextAnnotation, handleTextSubmit]);
+
+    // Focus hidden input when text mode is activated (for mobile keyboard)
+    useEffect(() => {
+        if (isTypingText && hiddenInputRef.current) {
+            // Small delay to ensure the input is rendered
+            setTimeout(() => {
+                hiddenInputRef.current?.focus();
+            }, 100);
+        }
+    }, [isTypingText]);
+
+    // Add keyboard event listeners for text input (fallback for desktop)
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!isTypingText) return;
+
+            // Don't prevent default if the hidden input is focused (mobile)
+            if (document.activeElement === hiddenInputRef.current) {
+                return;
+            }
+
+            event.preventDefault(); // Prevent default browser behavior
+
+            if (event.key === "Escape") {
+                handleTextCancel();
+            } else if (event.key === "Backspace") {
+                setTextInputValue(prev => prev.slice(0, -1));
+            } else if (event.key.length === 1) {
+                // Only add printable characters
+                setTextInputValue(prev => prev + event.key);
+            }
+        };
+
+        if (isTypingText) {
+            document.addEventListener("keydown", handleKeyDown);
+            return () => {
+                document.removeEventListener("keydown", handleKeyDown);
+            };
+        }
+    }, [isTypingText, handleTextCancel]);
+
+    const handleImageLoad = () => {
+        if (imageRef.current) {
+            const img = imageRef.current;
+            setImageDimensions({
+                width: img.naturalWidth,
+                height: img.naturalHeight
+            });
+            setIsImageLoaded(true);
+        }
+    };
+
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        console.error("Image failed to load:", e);
+        console.error("Image URL:", _.imageUrl);
     };
 
     const getImageCoordinates = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -480,39 +516,6 @@ export default function JC_ImageAnnotator(
 
     const handleCanvasTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
         handleCanvasMove(event);
-    };
-
-    const handleCanvasEnd = () => {
-        if (!isDrawing || !currentAnnotation) return;
-
-        // Only add annotation if it has meaningful size (at least 5 pixels in either direction)
-        const hasSize = currentAnnotation.width !== undefined && currentAnnotation.height !== undefined && (Math.abs(currentAnnotation.width) > 5 || Math.abs(currentAnnotation.height) > 5);
-
-        if (hasSize) {
-            // For completed annotations, preserve width/height for rectangles and arrows, convert others to fixed size
-            const finalAnnotation: Annotation = {
-                ...currentAnnotation,
-                // For rectangles (squares) and arrows, preserve the drawn dimensions
-                // For other shapes, convert to fixed size and remove width/height
-                ...(currentAnnotation.type === "square" || currentAnnotation.type === "arrow"
-                    ? {
-                          // Keep the drawn width and height for rectangles and arrows
-                          width: currentAnnotation.width,
-                          height: currentAnnotation.height
-                      }
-                    : {
-                          // For other shapes, use the larger dimension as the size and remove width/height
-                          size: currentAnnotation.width !== undefined && currentAnnotation.height !== undefined ? Math.max(Math.abs(currentAnnotation.width), Math.abs(currentAnnotation.height), currentTool.size) : currentTool.size,
-                          width: undefined,
-                          height: undefined
-                      })
-            };
-            setAnnotations(prev => [...prev, finalAnnotation]);
-        }
-
-        setIsDrawing(false);
-        setCurrentAnnotation(null);
-        setStartPoint(null);
     };
 
     const handleCanvasMouseUp = () => {

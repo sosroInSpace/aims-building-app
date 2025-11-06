@@ -119,28 +119,23 @@ export default function DefectsPage() {
                     // Clear cache to ensure fresh data with updated image counts
                     JC_Utils.clearLocalStorageForTable(CustomerDefectModel.tableName);
 
-                    // Load defects for this customer
-                    const defectsResponse = await CustomerDefectModel.GetByCustomerId(selectedCustomerId);
-                    if (defectsResponse && defectsResponse.ResultList) {
-                        setDefectsList(defectsResponse.ResultList);
+                    // Load defects for this customer with image counts in a single optimized SQL call
+                    const defectsWithImageCounts = await CustomerDefectModel.GetByCustomerIdWithImageCounts(selectedCustomerId);
+                    if (defectsWithImageCounts && defectsWithImageCounts.length > 0) {
+                        setDefectsList(defectsWithImageCounts);
                         setCustomerId(selectedCustomerId);
 
-                        // Load all defect images for this customer's defects
-                        const allImages: DefectImageModel[] = [];
-                        for (const defect of defectsResponse.ResultList) {
-                            try {
-                                const imagesResponse = await DefectImageModel.GetByDefectId(defect.Id);
-                                if (imagesResponse && imagesResponse.ResultList) {
-                                    allImages.push(...imagesResponse.ResultList);
-                                }
-                            } catch (error) {
-                                console.error(`Error loading images for defect ${defect.Id}:`, error);
-                            }
+                        // Initialize sort order counters for each defect based on image counts
+                        // We don't load all images upfront anymore - they'll be loaded when the photo modal is opened
+                        const counters = new Map<string, number>();
+                        for (const defect of defectsWithImageCounts) {
+                            // Initialize counter to the current image count (this will be used for new uploads)
+                            counters.set(defect.Id, defect.ImageCount || 0);
                         }
-                        setDefectImages(allImages);
+                        setDefectSortOrderCounters(counters);
 
-                        // Initialize sort order counters for each defect
-                        initializeSortOrderCounters(defectsResponse.ResultList, allImages);
+                        // Clear defectImages since we're not loading them upfront anymore
+                        setDefectImages([]);
                     } else {
                         // No defects found, but customer exists
                         setDefectsList([]);
@@ -168,19 +163,6 @@ export default function DefectsPage() {
             setIsLoading(false);
             setInitialised(true);
         }
-    };
-
-    // Initialize sort order counters for each defect based on current max sort order
-    const initializeSortOrderCounters = (defects: CustomerDefectModel[], images: DefectImageModel[]) => {
-        const counters = new Map<string, number>();
-
-        for (const defect of defects) {
-            const defectImagesForThisDefect = images.filter(img => img.DefectId === defect.Id);
-            const maxSortOrder = defectImagesForThisDefect.reduce((max, img) => Math.max(max, img.SortOrder || 0), 0);
-            counters.set(defect.Id, maxSortOrder);
-        }
-
-        setDefectSortOrderCounters(counters);
     };
 
     // Get next sort order for a defect and increment the counter
@@ -277,40 +259,11 @@ export default function DefectsPage() {
         }
     };
 
-    // Handle image uploaded callback - refresh defect images and defects list
-    const handleImageUploaded = async () => {
-        if (customerId) {
-            try {
-                // Clear cache to ensure fresh data with updated image counts
-                JC_Utils.clearLocalStorageForTable(CustomerDefectModel.tableName);
-
-                // Reload defects to get updated Ex_ImageFileIds
-                const defectsResponse = await CustomerDefectModel.GetByCustomerId(customerId);
-                if (defectsResponse && defectsResponse.ResultList) {
-                    setDefectsList(defectsResponse.ResultList);
-
-                    // Also reload all defect images for this customer's defects (for sort order counters)
-                    const allImages: DefectImageModel[] = [];
-                    for (const defect of defectsResponse.ResultList) {
-                        try {
-                            const imagesResponse = await DefectImageModel.GetByDefectId(defect.Id);
-                            if (imagesResponse && imagesResponse.ResultList) {
-                                allImages.push(...imagesResponse.ResultList);
-                            }
-                        } catch (error) {
-                            console.error(`Error loading images for defect ${defect.Id}:`, error);
-                        }
-                    }
-                    setDefectImages(allImages);
-
-                    // Reinitialize sort order counters after reloading images
-                    initializeSortOrderCounters(defectsResponse.ResultList, allImages);
-                }
-            } catch (error) {
-                console.error("Error refreshing defect images:", error);
-            }
-        }
-    };
+    // Handle image uploaded callback - no longer needed since image counts are updated locally
+    const handleImageUploaded = useCallback(async () => {
+        // Image count updates are now handled locally in the onFinishedCallback and onImageDeleted callbacks
+        // No need to reload the entire defects list
+    }, []);
 
     // Handle add defect button click
     const addDefect = async () => {
@@ -474,25 +427,28 @@ export default function DefectsPage() {
     };
 
     // Handle Use AI callback for manual override action button
-    const handleUseAICallback = async (defect: CustomerDefectModel): Promise<any> => {
-        // Check if defect has photos
-        const defectImageCount = JC_Utils_Defects.countDefectImages(defect.Id, defectImages);
+    const handleUseAICallback = useCallback(
+        async (defect: CustomerDefectModel): Promise<any> => {
+            // Check if defect has photos
+            const defectImageCount = JC_Utils_Defects.countDefectImages(defect.Id, defectImages);
 
-        if (defectImageCount === 0) {
-            JC_Utils.showToastError("No photos yet!");
-            return null;
-        }
+            if (defectImageCount === 0) {
+                JC_Utils.showToastError("No photos yet!");
+                return null;
+            }
 
-        // Store the current defect and show confirmation modal
-        setCurrentDefectForAI(defect);
-        setAiConfirmationOpen(true);
+            // Store the current defect and show confirmation modal
+            setCurrentDefectForAI(defect);
+            setAiConfirmationOpen(true);
 
-        // Return a promise that resolves when the AI call completes
-        return new Promise(resolve => {
-            // Store the resolve function to call it later
-            (window as any).aiCallbackResolve = resolve;
-        });
-    };
+            // Return a promise that resolves when the AI call completes
+            return new Promise(resolve => {
+                // Store the resolve function to call it later
+                (window as any).aiCallbackResolve = resolve;
+            });
+        },
+        [defectImages]
+    );
 
     // Handle AI confirmation
     const handleAiConfirmation = async () => {
@@ -1118,7 +1074,7 @@ export default function DefectsPage() {
                 {
                     inputId: `defect-imgs-${item.Id}`,
                     type: FieldTypeEnum.MultiPhoto,
-                    value: JC_Utils_Defects.countDefectImagesFromDefect(item).toString(),
+                    value: JC_Utils_Defects.countDefectImagesFromDefectOptimized(item).toString(),
                     s3KeyPath: `Inspection Report/${customer!.ClientName}/Images`,
                     onChange: (_value: string) => {
                         // Images count is read-only, no change handling needed
@@ -1126,158 +1082,54 @@ export default function DefectsPage() {
                 }
             ]
         };
-    }, [defectsList, buildingOptions, areaOptions, locationOptions, defectFindingOptions, severityOptions, customer]);
+    }, [defectsList, buildingOptions, areaOptions, locationOptions, defectFindingOptions, severityOptions, customer, handleUseAICallback]);
 
     // Handle photo field click - defect-specific logic
-    const handlePhotoFieldClick = (field: JC_FieldModel, item: CustomerDefectModel) => {
-        // Extract defectId from inputId (format: defect-imgs-{defectId})
-        const defectId = field.inputId.replace("defect-imgs-", "");
+    const handlePhotoFieldClick = useCallback(
+        (field: JC_FieldModel, item: CustomerDefectModel) => {
+            // Extract defectId from inputId (format: defect-imgs-{defectId})
+            const defectId = field.inputId.replace("defect-imgs-", "");
 
-        // Get DefectImage records for this defect to build files array with sort orders
-        const defectImagesForThisDefect = defectImages.filter(img => img.DefectId === defectId);
-        const files: JC_ModalPhotosModel[] = defectImagesForThisDefect.map(img => ({
-            FileId: img.ImageFileId,
-            SortOrder: img.SortOrder || 0
-        }));
-
-        return {
-            files: files,
-            title: "Defect Photos",
-            onImageUploaded: async (fileId: string, fileName: string) => {
-                try {
-                    // Get next sort order for this defect using the counter system
-                    // This ensures each upload gets a unique, incrementing sort order
-                    const nextSortOrder = getNextSortOrderForDefect(defectId);
-
-                    // Create DefectImage record
-                    const defectImage = new DefectImageModel({
-                        DefectId: defectId,
-                        ImageName: fileName.replace(".webp", ""), // Remove extension for ImageName
-                        ImageFileId: fileId,
-                        SortOrder: nextSortOrder
-                    });
-
-                    // Create the record and get the returned record with actual SortOrder from backend
-                    const createdDefectImage = await DefectImageModel.Create(defectImage);
-
-                    // Update the defectImages state with the returned record (which has the actual SortOrder)
-                    setDefectImages(prev => [...prev, createdDefectImage]);
-
-                    // Update the defectsList to include the new fileId in Ex_ImageFileIds
-                    setDefectsList(prevDefects =>
-                        prevDefects.map(defect => {
-                            if (defect.Id === defectId) {
-                                // Preserve the constructor by creating a new instance of the same class
-                                const updatedDefect = Object.create(Object.getPrototypeOf(defect));
-                                Object.assign(updatedDefect, defect, {
-                                    Ex_ImageFileIds: [...(defect.Ex_ImageFileIds || []), fileId]
-                                });
-                                return updatedDefect;
-                            }
-                            return defect;
-                        })
-                    );
-                } catch (error) {
-                    console.error("Error creating DefectImage record:", error);
-                    JC_Utils.showToastError("Failed to save image record");
-                }
-            },
-            onImageDeleted: async (fileId: string) => {
-                try {
-                    // Find the DefectImage record by ImageFileId
-                    const defectImageResponse = await DefectImageModel.GetByImageFileId(fileId);
-
-                    if (defectImageResponse?.ResultList && defectImageResponse.ResultList.length > 0) {
-                        const defectImageRecord = defectImageResponse.ResultList[0];
-
-                        // Delete the DefectImage record (this will also delete the File record via the updated Delete service)
-                        await DefectImageModel.Delete(defectImageRecord.Id);
-
-                        // Remove the DefectImage from the defectImages state
-                        setDefectImages(prev => prev.filter(img => img.ImageFileId !== fileId));
-
-                        // Update the defectsList to remove the fileId from Ex_ImageFileIds
-                        setDefectsList(prevDefects =>
-                            prevDefects.map(defect => {
-                                if (defect.Id === defectId) {
-                                    // Preserve the constructor by creating a new instance of the same class
-                                    const updatedDefect = Object.create(Object.getPrototypeOf(defect));
-                                    Object.assign(updatedDefect, defect, {
-                                        Ex_ImageFileIds: (defect.Ex_ImageFileIds || []).filter(id => id !== fileId)
-                                    });
-                                    return updatedDefect;
-                                }
-                                return defect;
-                            })
-                        );
-                    } else {
-                        throw new Error("Could not find DefectImage record to delete");
-                    }
-                } catch (error) {
-                    console.error("Error deleting image:", error);
-                    JC_Utils.showToastError("Failed to delete image");
-                    throw error; // Re-throw so JC_ModalPhotos can handle the error
-                }
-            },
-            onSortOrderChanged: async (updatedFiles: JC_ModalPhotosModel[]) => {
-                try {
-                    // Update the DefectImage records with new sort orders
-                    const defectImagesForThisDefect = defectImages.filter(img => img.DefectId === defectId);
-                    const updatedDefectImages: DefectImageModel[] = [];
-
-                    for (const file of updatedFiles) {
-                        const defectImage = defectImagesForThisDefect.find(img => img.ImageFileId === file.FileId);
-                        if (defectImage && defectImage.SortOrder !== file.SortOrder) {
-                            defectImage.SortOrder = file.SortOrder;
-                            updatedDefectImages.push(defectImage);
+            return {
+                files: [],
+                title: "Defect Photos",
+                getFilesCallback: async (): Promise<JC_ModalPhotosModel[]> => {
+                    try {
+                        const imagesResponse = await DefectImageModel.GetByDefectId(defectId);
+                        if (imagesResponse && imagesResponse.ResultList) {
+                            return imagesResponse.ResultList.map(img => ({
+                                FileId: img.ImageFileId,
+                                SortOrder: img.SortOrder || 0
+                            }));
                         }
+                        return [];
+                    } catch (error) {
+                        console.error(`Error loading images for defect ${defectId}:`, error);
+                        return [];
                     }
-
-                    if (updatedDefectImages.length > 0) {
-                        // Use the utility function to organize sort orders
-                        const organizedDefectImages = JC_Utils.organiseSortOrders(updatedDefectImages);
-
-                        // Update each DefectImage record via API
-                        for (const defectImage of organizedDefectImages) {
-                            await DefectImageModel.Update(defectImage);
-                        }
-
-                        // Update the defectImages state
-                        setDefectImages(prev =>
-                            prev.map(img => {
-                                const updated = organizedDefectImages.find(updated => updated.Id === img.Id);
-                                return updated || img;
-                            })
-                        );
-
-                        JC_Utils.showToastSuccess("Image order updated successfully");
-                    }
-                } catch (error) {
-                    console.error("Error updating image sort order:", error);
-                    JC_Utils.showToastError("Failed to update image order");
-                }
-            },
-            onImagesUploaded: async () => {
-                try {
-                    // Re-fetch all defect images for this defect to ensure modal shows updated data
-                    const imagesResponse = await DefectImageModel.GetByDefectId(defectId);
-                    if (imagesResponse && imagesResponse.ResultList) {
-                        // Update the defectImages state with fresh data for this defect
-                        setDefectImages(prev => {
-                            // Remove old images for this defect and add fresh ones
-                            const otherDefectImages = prev.filter(img => img.DefectId !== defectId);
-                            return [...otherDefectImages, ...imagesResponse.ResultList];
+                },
+                onFinishedCallback: async () => {
+                    // No longer needed - image count updates are handled by onImageUploaded callback
+                },
+                onImageUploaded: async (fileId: string, fileName: string) => {
+                    try {
+                        // Create DefectImage record to link the uploaded file to this defect
+                        const defectImage = new DefectImageModel({
+                            DefectId: defectId,
+                            ImageName: fileName,
+                            ImageFileId: fileId
                         });
 
-                        // Update the defectsList to include fresh Ex_ImageFileIds for this defect
+                        await DefectImageModel.Create(defectImage);
+
+                        // Increment image count for this defect after successful upload
                         setDefectsList(prevDefects =>
                             prevDefects.map(defect => {
                                 if (defect.Id === defectId) {
                                     // Preserve the constructor by creating a new instance of the same class
                                     const updatedDefect = Object.create(Object.getPrototypeOf(defect));
-                                    const freshImageFileIds = imagesResponse.ResultList.map(img => img.ImageFileId);
                                     Object.assign(updatedDefect, defect, {
-                                        Ex_ImageFileIds: freshImageFileIds
+                                        ImageCount: Number(defect.ImageCount || 0) + 1
                                     });
                                     return updatedDefect;
                                 }
@@ -1285,25 +1137,82 @@ export default function DefectsPage() {
                             })
                         );
 
-                        // Return the updated files array for the modal
-                        const updatedFiles: JC_ModalPhotosModel[] = imagesResponse.ResultList.map(img => ({
-                            FileId: img.ImageFileId,
-                            SortOrder: img.SortOrder || 0
-                        }));
-                        return updatedFiles;
+                        JC_Utils.showToastSuccess("Image uploaded successfully");
+                    } catch (error) {
+                        console.error("Error creating DefectImage record:", error);
+                        JC_Utils.showToastError("Failed to link image to defect");
                     }
-                    return [];
-                } catch (error) {
-                    console.error("Error re-fetching defect images:", error);
-                    JC_Utils.showToastError("Failed to refresh images");
-                    return [];
-                }
-            }
-        };
-    };
+                },
+                onSortOrderChanged: async (files: JC_ModalPhotosModel[]): Promise<void> => {
+                    try {
+                        // Get the current defect images to map FileId to DefectImage Id
+                        const imagesResponse = await DefectImageModel.GetByDefectId(defectId);
+                        if (imagesResponse && imagesResponse.ResultList) {
+                            // Create mapping from FileId to DefectImage Id
+                            const fileIdToDefectImageId = new Map<string, string>();
+                            imagesResponse.ResultList.forEach(img => {
+                                fileIdToDefectImageId.set(img.ImageFileId, img.Id);
+                            });
+
+                            // Prepare data for sort order update
+                            const sortOrderUpdates = files
+                                .map(file => ({
+                                    Id: fileIdToDefectImageId.get(file.FileId)!,
+                                    SortOrder: file.SortOrder
+                                }))
+                                .filter(update => update.Id); // Filter out any undefined Ids
+
+                            // Update sort orders in the database
+                            if (sortOrderUpdates.length > 0) {
+                                await DefectImageModel.UpdateSortOrder(sortOrderUpdates);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error updating image sort orders:", error);
+                        JC_Utils.showToastError("Failed to update image order");
+                    }
+                },
+                onImageDeleted: async (fileId: string): Promise<void> => {
+                    try {
+                        // Find the DefectImage record by FileId
+                        const defectImagesResponse = await DefectImageModel.GetByImageFileId(fileId);
+                        if (defectImagesResponse && defectImagesResponse.ResultList && defectImagesResponse.ResultList.length > 0) {
+                            const defectImage = defectImagesResponse.ResultList[0];
+
+                            // Delete the DefectImage record (this will also delete the associated File)
+                            await DefectImageModel.Delete(defectImage.Id);
+
+                            // Decrement image count for this defect after successful deletion
+                            setDefectsList(prevDefects =>
+                                prevDefects.map(defect => {
+                                    if (defect.Id === defectId) {
+                                        // Preserve the constructor by creating a new instance of the same class
+                                        const updatedDefect = Object.create(Object.getPrototypeOf(defect));
+                                        Object.assign(updatedDefect, defect, {
+                                            ImageCount: Math.max(Number(defect.ImageCount || 0) - 1, 0) // Ensure count doesn't go below 0
+                                        });
+                                        return updatedDefect;
+                                    }
+                                    return defect;
+                                })
+                            );
+                        } else {
+                            console.error("DefectImage not found for FileId:", fileId);
+                            JC_Utils.showToastError("Image not found");
+                        }
+                    } catch (error) {
+                        console.error("Error deleting image:", error);
+                        JC_Utils.showToastError("Failed to delete image");
+                    }
+                },
+                s3KeyPath: `Inspection Report/${customer?.ClientName || "Unknown"}/Images/`
+            };
+        },
+        [customer?.ClientName]
+    );
 
     // Default sort function for defects - group by area names in priority order
-    const defaultSort = (a: CustomerDefectModel, b: CustomerDefectModel) => {
+    const defaultSort = useCallback((a: CustomerDefectModel, b: CustomerDefectModel) => {
         // Define area priority order
         const areaPriority = ["Interior", "Roof Void", "Subfloor", "Exterior", "Outbuilding"];
 
@@ -1337,7 +1246,7 @@ export default function DefectsPage() {
         const nameA = (a.Name || "").toLowerCase();
         const nameB = (b.Name || "").toLowerCase();
         return nameA.localeCompare(nameB);
-    };
+    }, []);
 
     // Create JC_FormTablet model - use useMemo to regenerate when defectsList changes
     const formTabletModel: JC_FormTabletModel = useMemo(
@@ -1359,7 +1268,7 @@ export default function DefectsPage() {
             customer: customer, // Pass customer object for CustomOrder persistence
             useContainerHeight: true // Use height: 100% instead of height: 100vh
         }),
-        [customerId, isLoading, createFormListModel, handleImageUploaded, handleIndividualDefectFieldChange, customer?.Address, customer, defaultSort]
+        [customerId, isLoading, createFormListModel, handleImageUploaded, handleIndividualDefectFieldChange, customer, defaultSort, handlePhotoFieldClick]
     );
 
     // - RENDER - //

@@ -13,6 +13,7 @@ interface JC_PhotoUploadProps {
     fileId?: string;
     onImageUploaded: (fileId: string, fileName: string) => void;
     s3KeyPath?: string;
+    targetUserId?: string; // Optional target user ID for admin uploads
 }
 
 export default function JC_PhotoUpload(_: Readonly<JC_PhotoUploadProps>) {
@@ -101,14 +102,19 @@ export default function JC_PhotoUpload(_: Readonly<JC_PhotoUploadProps>) {
                 reader.onload = async e => {
                     const base64 = e.target?.result as string;
                     if (base64) {
-                        try {
-                            // Resize image to 800x600 before saving
-                            const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
-                            await savePhotoToAws(resizedBase64);
-                        } catch (resizeError) {
-                            console.error("Error resizing image:", resizeError);
-                            // If resize fails, save original image
+                        // For logos, save original image without any resizing
+                        if (_.s3KeyPath && _.s3KeyPath.includes("Logo")) {
                             await savePhotoToAws(base64);
+                        } else {
+                            try {
+                                // Resize image to 800x600 before saving for non-logo images
+                                const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
+                                await savePhotoToAws(resizedBase64);
+                            } catch (resizeError) {
+                                console.error("Error resizing image:", resizeError);
+                                // If resize fails, save original image
+                                await savePhotoToAws(base64);
+                            }
                         }
                     }
                     setIsCapturingPhoto(false);
@@ -154,14 +160,19 @@ export default function JC_PhotoUpload(_: Readonly<JC_PhotoUploadProps>) {
                 reader.onload = async e => {
                     const base64 = e.target?.result as string;
                     if (base64) {
-                        try {
-                            // Resize image to 800x600 before saving
-                            const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
-                            await savePhotoToAws(resizedBase64);
-                        } catch (resizeError) {
-                            console.error("Error resizing image:", resizeError);
-                            // If resize fails, save original image
+                        // For logos, save original image without any resizing
+                        if (_.s3KeyPath && _.s3KeyPath.includes("Logo")) {
                             await savePhotoToAws(base64);
+                        } else {
+                            try {
+                                // Resize image to 800x600 before saving for non-logo images
+                                const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
+                                await savePhotoToAws(resizedBase64);
+                            } catch (resizeError) {
+                                console.error("Error resizing image:", resizeError);
+                                // If resize fails, save original image
+                                await savePhotoToAws(base64);
+                            }
                         }
                     }
                     setIsCapturingPhoto(false);
@@ -193,12 +204,13 @@ export default function JC_PhotoUpload(_: Readonly<JC_PhotoUploadProps>) {
             const s3Key = _.s3KeyPath ? `${_.s3KeyPath}/${fileName}` : `Images/${fileName}`;
 
             // Call the generic AWS save API
-            const result = await JC_PostRaw<{ fileData: string; key: string; contentType: MimeType; fileName: string; notes: string }, { success: boolean; fileId: string; fileName: string; key: string; message: string }>("aws/saveFileToAws", {
+            const result = await JC_PostRaw<{ fileData: string; key: string; contentType: MimeType; fileName: string; notes: string; targetUserId?: string }, { success: boolean; fileId: string; fileName: string; key: string; message: string }>("aws/saveFileToAws", {
                 fileData: photoBase64,
                 key: s3Key,
                 contentType: MimeType.WEBP,
                 fileName: fileName,
-                notes: `Image uploaded via JC_PhotoUpload`
+                notes: `Image uploaded via JC_PhotoUpload`,
+                targetUserId: _.targetUserId
             });
 
             if (result.success) {

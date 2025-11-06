@@ -8,7 +8,7 @@ import { shouldHideHeaderFooter } from "./utils/pageConfig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
-import { Open_Sans, Special_Elite, Margarine } from "next/font/google";
+import { Margarine, Open_Sans, Special_Elite } from "next/font/google";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ToastContainer } from "react-toastify";

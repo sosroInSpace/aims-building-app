@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { JC_Utils } from "../Utils";
 import { JC_Put } from "../apiServices/JC_Put";
 import JC_Button from "../components/JC_Button/JC_Button";
@@ -24,8 +26,6 @@ import { O_StoreysModel } from "../models/O_Storeys";
 import { O_WallsModel } from "../models/O_Walls";
 import { O_WeatherModel } from "../models/O_Weather";
 import styles from "./page.module.scss";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
 
 export default function PropertyPage() {
     const router = useRouter();
@@ -93,7 +93,7 @@ export default function PropertyPage() {
     const [addWallsModalLoading, setAddWallsModalLoading] = useState(false);
     const [addWeatherModalLoading, setAddWeatherModalLoading] = useState(false);
 
-    // Load all data (property and options) simultaneously
+    // Load all data using optimized single SQL call
     const loadData = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -106,52 +106,39 @@ export default function PropertyPage() {
                 return;
             }
 
-            // Check if this customer exists and is not deleted
-            const customerExists = await CustomerModel.ItemExists(selectedCustomerId);
-
-            if (!customerExists) {
-                // Customer doesn't exist or is deleted, clear localStorage
-                localStorage.removeItem(LocalStorageKeyEnum.JC_SelectedCustomer);
-                setNoCustomerSelected(true);
-                setIsLoading(false);
-                setInitialised(true);
-                return;
-            }
-
             setCustomerId(selectedCustomerId);
 
-            // Prepare option promises
-            const optionPromises = [O_BuildingTypeModel.GetList(), O_OrientationModel.GetList(), O_NumBedroomsModel.GetList(), O_StoreysModel.GetList(), O_FurnishedModel.GetList(), O_OccupiedModel.GetList(), O_FloorModel.GetList(), O_OtherBuildingElementsModel.GetList(), O_OtherTimberBldgElementsModel.GetList(), O_RoofModel.GetList(), O_WallsModel.GetList(), O_WeatherModel.GetList()];
+            try {
+                // Use the optimized method that gets customer data and all property options in one SQL call
+                const propertyData = await CustomerModel.GetPropertyData(selectedCustomerId);
 
-            // Prepare property promise
-            const propertyPromise = CustomerModel.Get(selectedCustomerId);
+                // Set customer data
+                setCurrentProperty(new CustomerModel(propertyData));
 
-            // Execute all promises simultaneously
-            const [optionResults, propertyResult] = await Promise.all([Promise.all(optionPromises), propertyPromise]);
-
-            // Extract option results
-            const [buildingTypesResult, orientationsResult, numBedroomsResult, storeysResult, furnishedResult, occupiedResult, floorsResult, otherBuildingElementsResult, otherTimberBldgElementsResult, roofsResult, wallsResult, weatherResult] = optionResults;
-
-            // Set option states
-            setBuildingTypeOptions(buildingTypesResult.ResultList || []);
-            setOrientationOptions(orientationsResult.ResultList || []);
-            setNumBedroomsOptions(numBedroomsResult.ResultList || []);
-            setStoreysOptions(storeysResult.ResultList || []);
-            setFurnishedOptions(furnishedResult.ResultList || []);
-            setOccupiedOptions(occupiedResult.ResultList || []);
-            setFloorOptions(floorsResult.ResultList || []);
-            setOtherBuildingElementsOptions(otherBuildingElementsResult.ResultList || []);
-            setOtherTimberBldgElementsOptions(otherTimberBldgElementsResult.ResultList || []);
-            setRoofOptions(roofsResult.ResultList || []);
-            setWallsOptions(wallsResult.ResultList || []);
-            setWeatherOptions(weatherResult.ResultList || []);
-
-            // Set property data
-            if (propertyResult) {
-                setCurrentProperty(propertyResult);
+                // Set all option data from the single query
+                setBuildingTypeOptions(propertyData.BuildingTypeOptions || []);
+                setOrientationOptions(propertyData.OrientationOptions || []);
+                setNumBedroomsOptions(propertyData.NumBedroomsOptions || []);
+                setStoreysOptions(propertyData.StoreysOptions || []);
+                setFurnishedOptions(propertyData.FurnishedOptions || []);
+                setOccupiedOptions(propertyData.OccupiedOptions || []);
+                setFloorOptions(propertyData.FloorOptions || []);
+                setOtherBuildingElementsOptions(propertyData.OtherBuildingElementsOptions || []);
+                setOtherTimberBldgElementsOptions(propertyData.OtherTimberBldgElementsOptions || []);
+                setRoofOptions(propertyData.RoofOptions || []);
+                setWallsOptions(propertyData.WallsOptions || []);
+                setWeatherOptions(propertyData.WeatherOptions || []);
+            } catch (error) {
+                console.error("Error loading property data:", error);
+                // Customer doesn't exist or access denied, clear localStorage
+                localStorage.removeItem(LocalStorageKeyEnum.JC_SelectedCustomer);
+                setNoCustomerSelected(true);
             }
         } catch (error) {
             console.error("Error loading data:", error);
+            // Clear localStorage if there's an error
+            localStorage.removeItem(LocalStorageKeyEnum.JC_SelectedCustomer);
+            setNoCustomerSelected(true);
         } finally {
             setIsLoading(false);
             setInitialised(true);

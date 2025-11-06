@@ -1,5 +1,6 @@
 import { JC_Utils_Files } from "@/app/Utils";
 import { FileBusiness } from "@/app/api/file/business";
+import { UserBusiness } from "@/app/api/user/business";
 import { auth } from "@/app/auth";
 import { FileModel } from "@/app/models/File";
 import { NextRequest, NextResponse } from "next/server";
@@ -9,7 +10,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
     try {
-        const { fileData, key, contentType, fileName, notes, replaceFileId } = await request.json();
+        const { fileData, key, contentType, fileName, notes, replaceFileId, targetUserId } = await request.json();
 
         if (!fileData || !key || !contentType || !fileName) {
             return NextResponse.json({ error: "Missing required fields: fileData, key, contentType, or fileName" }, { status: 400 });
@@ -19,6 +20,29 @@ export async function POST(request: NextRequest) {
         const session = await auth();
         if (!session?.user?.Id) {
             return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
+        }
+
+        // Determine which user ID to use for the file
+        let fileUserId = session.user.Id;
+
+        if (targetUserId) {
+            // If targetUserId is provided, verify authorization
+            // Only admins (EmployeeOfUserId is null) can upload files for other users
+            if (session.user.EmployeeOfUserId) {
+                return NextResponse.json({ error: "Only admin users can upload files for other users" }, { status: 403 });
+            }
+
+            // Verify that the target user is an employee of the current admin
+            const targetUser = await UserBusiness.Get(targetUserId);
+            if (!targetUser) {
+                return NextResponse.json({ error: "Target user not found" }, { status: 404 });
+            }
+
+            if (targetUser.EmployeeOfUserId !== session.user.Id) {
+                return NextResponse.json({ error: "You can only upload files for your employees" }, { status: 403 });
+            }
+
+            fileUserId = targetUserId;
         }
 
         // Convert base64 to buffer
@@ -51,7 +75,7 @@ export async function POST(request: NextRequest) {
         } else {
             // Create new File record in database
             fileRecord = new FileModel({
-                UserId: session.user.Id,
+                UserId: fileUserId,
                 FileName: fileName,
                 StorageProvider: "AWS_S3",
                 Bucket: process.env.AWS_S3_BUCKET_NAME || "",
