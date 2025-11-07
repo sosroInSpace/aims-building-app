@@ -24,11 +24,15 @@ export default function JC_ModalPhotos(
         onCancel: () => void;
         title: string;
         files: JC_ModalPhotosModel[];
-        onImageUploaded: (fileId: string, fileName: string) => void;
+        // New interface props
+        onImageUploaded?: (fileId: string, fileName: string) => void;
         onImageDeleted?: (fileId: string) => Promise<void>;
         onSortOrderChanged?: (files: JC_ModalPhotosModel[]) => void;
-        s3KeyPath?: string;
         onImagesUploaded?: () => Promise<JC_ModalPhotosModel[]>; // Callback after all selected images are uploaded, returns updated files
+        // Legacy interface props (for backward compatibility)
+        getFilesCallback?: () => Promise<JC_ModalPhotosModel[]>;
+        onFinishedCallback?: () => Promise<void>;
+        s3KeyPath?: string;
     }>
 ) {
     // - STATE - //
@@ -40,6 +44,8 @@ export default function JC_ModalPhotos(
     const [isEditingImage, setIsEditingImage] = useState<boolean>(false);
     const [isSavingAnnotation, setIsSavingAnnotation] = useState<boolean>(false);
     const [pendingReselectionFileId, setPendingReselectionFileId] = useState<string | null>(null);
+    const [shouldSelectLastImage, setShouldSelectLastImage] = useState<boolean>(false); // Flag to auto-select last image after upload
+    const [loadedFiles, setLoadedFiles] = useState<JC_ModalPhotosModel[]>([]); // Track the actual loaded files data
 
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState<boolean>(false);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -52,14 +58,29 @@ export default function JC_ModalPhotos(
     const loadImages = useCallback(async () => {
         setIsLoading(true);
         try {
-            if (_.files.length === 0) {
+            // Handle legacy interface - use getFilesCallback if provided
+            let filesToLoad = _.files;
+            if (_.getFilesCallback && _.files.length === 0) {
+                try {
+                    filesToLoad = await _.getFilesCallback();
+                } catch (error) {
+                    console.error("Error loading files from getFilesCallback:", error);
+                    filesToLoad = _.files; // Fallback to provided files
+                }
+            }
+
+            if (filesToLoad.length === 0) {
                 setImages([]);
                 setSelectedImage(null);
+                setLoadedFiles([]);
                 return;
             }
 
+            // Store the loaded files data for use in move functions
+            setLoadedFiles(filesToLoad);
+
             // Extract fileIds from the files array
-            const fileIds = _.files.map(f => f.FileId);
+            const fileIds = filesToLoad.map(f => f.FileId);
 
             // Use the new FileModel.GetListByIdsList method which includes signed URLs
             const filesResponse = await FileModel.GetListByIdsList(fileIds);
@@ -71,10 +92,10 @@ export default function JC_ModalPhotos(
                     fileModel: file
                 })) || [];
 
-            // Sort images by SortOrder from the files prop (which already has the correct sort orders)
+            // Sort images by SortOrder from the files array (which already has the correct sort orders)
             const sortedImages = loadedImages.sort((a, b) => {
-                const aFile = _.files.find(f => f.FileId === a.fileId);
-                const bFile = _.files.find(f => f.FileId === b.fileId);
+                const aFile = filesToLoad.find(f => f.FileId === a.fileId);
+                const bFile = filesToLoad.find(f => f.FileId === b.fileId);
                 return (aFile?.SortOrder || 0) - (bFile?.SortOrder || 0);
             });
 
@@ -98,8 +119,6 @@ export default function JC_ModalPhotos(
                                     const imageElements = imagesListRef.current.querySelectorAll(".imageListItem");
                                     if (imageElements[selectedImageIndex]) {
                                         const selectedElement = imageElements[selectedImageIndex] as HTMLElement;
-                                        const containerRect = imagesListRef.current.getBoundingClientRect();
-                                        const elementRect = selectedElement.getBoundingClientRect();
 
                                         // Calculate scroll position to center the selected image in view
                                         const scrollTop = selectedElement.offsetTop - imagesListRef.current.clientHeight / 2 + selectedElement.clientHeight / 2;
@@ -114,6 +133,23 @@ export default function JC_ModalPhotos(
                         setSelectedImage(sortedImages[0]);
                         setPendingReselectionFileId(null);
                     }
+                } else if (shouldSelectLastImage) {
+                    // Auto-select the last image after upload with 300ms delay
+                    setTimeout(() => {
+                        if (filesToLoad.length > 0) {
+                            // Find the image with the highest SortOrder from filesToLoad
+                            const sortedLoadedFiles = [...filesToLoad].sort((a, b) => (b.SortOrder || 0) - (a.SortOrder || 0));
+                            const lastFileId = sortedLoadedFiles[0]?.FileId;
+
+                            if (lastFileId) {
+                                const lastImage = sortedImages.find(img => img.fileId === lastFileId);
+                                if (lastImage) {
+                                    setSelectedImage(lastImage);
+                                }
+                            }
+                        }
+                        setShouldSelectLastImage(false); // Clear the flag
+                    }, 300);
                 } else {
                     // Auto-select the first image when images are loaded (normal case)
                     setSelectedImage(sortedImages[0]);
@@ -135,7 +171,7 @@ export default function JC_ModalPhotos(
         } finally {
             setIsLoading(false);
         }
-    }, [_.files]);
+    }, [_, pendingReselectionFileId, shouldSelectLastImage]);
 
     // Handle delete image
     const handleDeleteImage = () => {
@@ -166,6 +202,11 @@ export default function JC_ModalPhotos(
                 setSelectedImage(remainingImages[0]);
             }
 
+            // Call the finished callback to update parent state (e.g., image count)
+            if (_.onFinishedCallback) {
+                await _.onFinishedCallback();
+            }
+
             JC_Utils.showToastSuccess("Image deleted successfully");
         } catch (error) {
             console.error("Error deleting image:", error);
@@ -183,12 +224,10 @@ export default function JC_ModalPhotos(
 
     // - EFFECTS - //
     useEffect(() => {
-        if (_.isOpen && _.files.length > 0) {
+        if (_.isOpen) {
+            // Always call loadImages when modal opens, regardless of files length
+            // loadImages will handle both cases: files provided or getFilesCallback
             loadImages();
-        } else if (_.isOpen && _.files.length === 0) {
-            // Clear images when no files but modal is open
-            setImages([]);
-            setSelectedImage(null);
         } else if (!_.isOpen) {
             // Reset all state when modal closes to completely destroy modal state
             setImages([]);
@@ -196,6 +235,7 @@ export default function JC_ModalPhotos(
             setIsLoading(false);
             setIsCapturingPhoto(false);
             setIsSaving(false);
+            setShouldSelectLastImage(false);
 
             setDeleteConfirmationOpen(false);
             setIsDeleting(false);
@@ -212,12 +252,9 @@ export default function JC_ModalPhotos(
     // Additional effect to handle files changes when modal is already open
     useEffect(() => {
         if (_.isOpen) {
-            if (_.files.length > 0) {
-                loadImages();
-            } else {
-                setImages([]);
-                setSelectedImage(null);
-            }
+            // Always call loadImages when files change and modal is open
+            // loadImages will handle both cases: files provided or getFilesCallback
+            loadImages();
         }
     }, [_.files, _.isOpen, loadImages]);
 
@@ -364,14 +401,28 @@ export default function JC_ModalPhotos(
             });
 
             if (result.success) {
-                // Notify parent component that an image was uploaded
-                await _.onImageUploaded(result.fileId, fileName);
+                // Set flag to auto-select last image after all operations complete
+                setShouldSelectLastImage(true);
+
+                // Handle new interface
+                if (_.onImageUploaded) {
+                    await _.onImageUploaded(result.fileId, fileName);
+                }
 
                 // Notify parent that images have been uploaded and get updated files
                 if (_.onImagesUploaded) {
-                    const updatedFiles = await _.onImagesUploaded();
+                    await _.onImagesUploaded();
                     // The parent will handle updating the files prop, which will trigger loadImages via useEffect
                 }
+
+                // Handle legacy interface
+                if (_.onFinishedCallback) {
+                    await _.onFinishedCallback();
+                }
+
+                // Reload images to include the newly uploaded image
+                // The loadImages function will handle auto-selecting the last image due to shouldSelectLastImage flag
+                await loadImages();
             }
         } catch (error) {
             console.error("Error saving photo:", error);
@@ -394,7 +445,7 @@ export default function JC_ModalPhotos(
         setIsEditingImage(false);
     };
 
-    const handleSaveAnnotatedImage = async (annotations: Annotation[], createNew?: boolean, fileId?: string) => {
+    const handleSaveAnnotatedImage = async (_annotations: Annotation[], createNew?: boolean, fileId?: string) => {
         if (!selectedImage) return;
 
         setIsSavingAnnotation(true);
@@ -423,7 +474,9 @@ export default function JC_ModalPhotos(
 
                 if (createNew) {
                     // Notify parent component that a new image was created
-                    await _.onImageUploaded(result.fileId, result.fileName);
+                    if (_.onImageUploaded) {
+                        _.onImageUploaded(result.fileId, result.fileName);
+                    }
                     JC_Utils.showToastSuccess("New annotated image created successfully");
 
                     // Reload images to get the new image
@@ -439,6 +492,11 @@ export default function JC_ModalPhotos(
                             return currentImages;
                         });
                     }, 100); // Small delay to ensure images are loaded
+
+                    // Handle legacy interface for new image creation
+                    if (_.onFinishedCallback) {
+                        await _.onFinishedCallback();
+                    }
                 } else {
                     JC_Utils.showToastSuccess("Annotated image saved successfully");
 
@@ -456,6 +514,11 @@ export default function JC_ModalPhotos(
                             return currentImages;
                         });
                     }, 100); // Small delay to ensure images are loaded
+
+                    // Handle legacy interface for image update
+                    if (_.onFinishedCallback) {
+                        await _.onFinishedCallback();
+                    }
                 }
             }
         } catch (error) {
@@ -468,68 +531,92 @@ export default function JC_ModalPhotos(
 
     // Handle move image up
     const handleMoveImageUp = () => {
+        console.log("handleMoveImageUp called", { selectedImage, imagesLength: images.length, loadedFilesLength: loadedFiles.length });
         if (!selectedImage || images.length <= 1) return;
 
         const currentIndex = images.findIndex(img => img.fileId === selectedImage.fileId);
         if (currentIndex <= 0) return;
 
-        // Find the current file in the files array
-        const currentFileIndex = _.files.findIndex(f => f.FileId === selectedImage.fileId);
+        // Find the current file in the loaded files array
+        const currentFileIndex = loadedFiles.findIndex(f => f.FileId === selectedImage.fileId);
         if (currentFileIndex <= 0) return;
 
-        // Store the current selected image fileId for re-selection after reload
-        setPendingReselectionFileId(selectedImage.fileId);
+        // Create a copy of the loaded files array
+        const updatedFiles = [...loadedFiles];
 
-        // Create a copy of the files array
-        const updatedFiles = [..._.files];
+        // Get the two affected files before swapping
+        const currentFile = updatedFiles[currentFileIndex];
+        const previousFile = updatedFiles[currentFileIndex - 1];
 
         // Swap sort orders with the previous file
-        const tempSortOrder = updatedFiles[currentFileIndex].SortOrder;
-        updatedFiles[currentFileIndex].SortOrder = updatedFiles[currentFileIndex - 1].SortOrder;
-        updatedFiles[currentFileIndex - 1].SortOrder = tempSortOrder;
+        const tempSortOrder = currentFile.SortOrder;
+        currentFile.SortOrder = previousFile.SortOrder;
+        previousFile.SortOrder = tempSortOrder;
 
         // Sort the array by SortOrder to maintain proper order
         updatedFiles.sort((a, b) => a.SortOrder - b.SortOrder);
 
-        // Call the parent callback to handle the backend update
-        if (_.onSortOrderChanged) {
-            _.onSortOrderChanged(updatedFiles);
-        }
+        // Update the loaded files state
+        setLoadedFiles(updatedFiles);
 
-        JC_Utils.showToastSuccess("Image moved up successfully");
+        // Immediately update the local images state to reflect the new order
+        const updatedImages = [...images];
+        // Swap the images in the local state
+        [updatedImages[currentIndex], updatedImages[currentIndex - 1]] = [updatedImages[currentIndex - 1], updatedImages[currentIndex]];
+        setImages(updatedImages);
+
+        // Keep the same image selected
+        setSelectedImage(updatedImages[currentIndex - 1]);
+
+        // Call the parent callback to handle the backend update - only pass the 2 affected images
+        if (_.onSortOrderChanged) {
+            _.onSortOrderChanged([currentFile, previousFile]);
+        }
     };
 
     // Handle move image down
     const handleMoveImageDown = () => {
+        console.log("handleMoveImageDown called", { selectedImage, imagesLength: images.length, loadedFilesLength: loadedFiles.length });
         if (!selectedImage || images.length <= 1) return;
 
         const currentIndex = images.findIndex(img => img.fileId === selectedImage.fileId);
         if (currentIndex >= images.length - 1) return;
 
-        // Find the current file in the files array
-        const currentFileIndex = _.files.findIndex(f => f.FileId === selectedImage.fileId);
-        if (currentFileIndex >= _.files.length - 1) return;
+        // Find the current file in the loaded files array
+        const currentFileIndex = loadedFiles.findIndex(f => f.FileId === selectedImage.fileId);
+        if (currentFileIndex >= loadedFiles.length - 1) return;
 
-        // Store the current selected image fileId for re-selection after reload
-        setPendingReselectionFileId(selectedImage.fileId);
+        // Create a copy of the loaded files array
+        const updatedFiles = [...loadedFiles];
 
-        // Create a copy of the files array
-        const updatedFiles = [..._.files];
+        // Get the two affected files before swapping
+        const currentFile = updatedFiles[currentFileIndex];
+        const nextFile = updatedFiles[currentFileIndex + 1];
 
         // Swap sort orders with the next file
-        const tempSortOrder = updatedFiles[currentFileIndex].SortOrder;
-        updatedFiles[currentFileIndex].SortOrder = updatedFiles[currentFileIndex + 1].SortOrder;
-        updatedFiles[currentFileIndex + 1].SortOrder = tempSortOrder;
+        const tempSortOrder = currentFile.SortOrder;
+        currentFile.SortOrder = nextFile.SortOrder;
+        nextFile.SortOrder = tempSortOrder;
 
         // Sort the array by SortOrder to maintain proper order
         updatedFiles.sort((a, b) => a.SortOrder - b.SortOrder);
 
-        // Call the parent callback to handle the backend update
-        if (_.onSortOrderChanged) {
-            _.onSortOrderChanged(updatedFiles);
-        }
+        // Update the loaded files state
+        setLoadedFiles(updatedFiles);
 
-        JC_Utils.showToastSuccess("Image moved down successfully");
+        // Immediately update the local images state to reflect the new order
+        const updatedImages = [...images];
+        // Swap the images in the local state
+        [updatedImages[currentIndex], updatedImages[currentIndex + 1]] = [updatedImages[currentIndex + 1], updatedImages[currentIndex]];
+        setImages(updatedImages);
+
+        // Keep the same image selected
+        setSelectedImage(updatedImages[currentIndex + 1]);
+
+        // Call the parent callback to handle the backend update - only pass the 2 affected images
+        if (_.onSortOrderChanged) {
+            _.onSortOrderChanged([currentFile, nextFile]);
+        }
     };
 
     // - RENDER - //
