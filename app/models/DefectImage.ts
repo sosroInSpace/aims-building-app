@@ -50,6 +50,9 @@ export class DefectImageModel extends _Base implements _ModelRequirements {
     static async UpdateList(dataList: DefectImageModel[]) {
         return await JC_PostRaw<DefectImageModel[]>(`${this.apiRoute}/updateList`, dataList, undefined, "DefectImage");
     }
+    static async UpdateSortOrder(data: { Id: string; SortOrder: number }[]) {
+        return await JC_PostRaw(`${this.apiRoute}/updateSortOrder`, data, undefined, "DefectImage");
+    }
     static async Delete(id: string) {
         const defectImage = await this.Get(id);
         const result = await JC_Delete(DefectImageModel, this.apiRoute, id);
@@ -106,6 +109,9 @@ export class DefectImageModel extends _Base implements _ModelRequirements {
     }
     static async GetNextSortOrder(defectId: string) {
         return await JC_GetRaw<number>(`${this.apiRoute}/getNextSortOrder`, { defectId });
+    }
+    static async GetImageCountByDefectId(defectId: string) {
+        return await JC_GetRaw<{ imageCount: number }>(`${this.apiRoute}/getImageCountByDefectId`, { defectId });
     }
 
     // - --------- - //

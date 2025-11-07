@@ -1484,6 +1484,14 @@ export class JC_Utils_Defects {
         return 0;
     }
 
+    // Count DefectImages for a specific defect using ImageCount from optimized SQL query
+    static countDefectImagesFromDefectOptimized(defect: any): number {
+        if (defect.ImageCount !== undefined && defect.ImageCount !== null) {
+            return defect.ImageCount;
+        }
+        return 0;
+    }
+
     // Get defects for a specific room
     static getDefectsForRoom(_roomName: string, allDefects: any[], _roomOptions: any[]): any[] {
         // For now, return all defects since we don't have room-specific filtering

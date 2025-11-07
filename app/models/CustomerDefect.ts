@@ -3,7 +3,7 @@ import { DefectImageBusiness } from "../api/defectImage/business";
 import { JC_Delete } from "../apiServices/JC_Delete";
 import { JC_Get } from "../apiServices/JC_Get";
 import { JC_GetList } from "../apiServices/JC_GetList";
-import { JC_GetRaw } from "../apiServices/JC_GetRaw";
+import { JC_GetRaw, JC_GetRawCached } from "../apiServices/JC_GetRaw";
 import { JC_Post } from "../apiServices/JC_Post";
 import { JC_PostRaw } from "../apiServices/JC_PostRaw";
 import { JC_Put } from "../apiServices/JC_Put";
@@ -62,10 +62,6 @@ export class CustomerDefectModel extends _Base implements _ModelRequirements {
         return await JC_PostRaw(`${this.apiRoute}/deleteList`, { ids }, undefined, "CustomerDefect");
     }
 
-    static async GetByCustomerId(customerId: string) {
-        return await JC_GetList<CustomerDefectModel>(CustomerDefectModel, `${this.apiRoute}/byCustomer`, undefined, { customerId });
-    }
-
     static async AiGenerateInfoFromDefectId(defectId: string): Promise<{ SelectedOptions: Array<{ Code: string; NameOverride: string | null; InformationOverride: string | null }> }> {
         return await JC_PostRaw<{ defectId: string }, { SelectedOptions: Array<{ Code: string; NameOverride: string | null; InformationOverride: string | null }> }>(`${this.apiRoute}/aiGenerateInfoFromDefectId`, { defectId });
     }
@@ -104,6 +100,9 @@ export class CustomerDefectModel extends _Base implements _ModelRequirements {
     Ex_SeverityList?: O_SeverityModel[];
     Ex_SeverityNamesList?: string[];
     Ex_ImageFileIds?: string[];
+
+    // Image count from optimized SQL query
+    ImageCount?: number;
 
     // Extended Fields (required by _ModelRequirements interface)
     ExtendedFields: _ExtendedField[] = [
@@ -398,6 +397,7 @@ export class CustomerDefectModel extends _Base implements _ModelRequirements {
         this.Ex_SeverityList = undefined;
         this.Ex_SeverityNamesList = undefined;
         this.Ex_ImageFileIds = undefined;
+        this.ImageCount = undefined;
         Object.assign(this, init);
     }
 
@@ -434,6 +434,23 @@ export class CustomerDefectModel extends _Base implements _ModelRequirements {
             default:
                 return FieldTypeEnum.Text;
         }
+    }
+
+    // - --------------- - //
+    // - CUSTOM SERVICES - //
+    // - --------------- - //
+
+    static async GetByCustomerId(customerId: string, abortSignal?: AbortSignal) {
+        return await JC_GetList<CustomerDefectModel>(CustomerDefectModel, `${this.apiRoute}/byCustomer`, undefined, { customerId }, abortSignal);
+    }
+
+    static async GetByCustomerIdWithImageCounts(customerId: string, sortField?: string, sortAsc?: boolean) {
+        const params: any = { customerId };
+        if (sortField) params.sortField = sortField;
+        if (sortAsc !== undefined) params.sortAsc = sortAsc.toString();
+
+        const cacheKey = `CustomerDefect_getByCustomerIdWithImageCounts_${JSON.stringify(params)}`;
+        return await JC_GetRawCached<CustomerDefectModel[]>(`${this.apiRoute}/getByCustomerIdWithImageCounts`, params, cacheKey, this.cacheMinutes_getList);
     }
 
     // - ------ - //
