@@ -22,6 +22,7 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthConfig = {
+    secret: process.env.AUTH_SECRET,
     providers: [
         Credentials({
             // You can specify which fields should be submitted, by adding keys to the `credentials` object.

@@ -117,6 +117,16 @@ export class CustomerModel extends _Base implements _ModelRequirements {
         const cacheKey = `Customer_getListForEmployeesWithDefectCounts_${JSON.stringify(params)}`;
         return await JC_GetRawCached<(CustomerModel & { DefectCount: number })[]>(`${CustomerModel.apiRoute}/getListForEmployeesWithDefectCounts`, params, cacheKey, CustomerModel.cacheMinutes_getList);
     }
+    static async GetListWithDefectCountsByUserId(userId: string, sortField?: string, sortAsc?: boolean) {
+        const { JC_GetRawCached } = await import("../apiServices/JC_GetRaw");
+        const params = {
+            userId: userId,
+            sortField: sortField || "ModifiedAt",
+            sortAsc: sortAsc !== undefined ? sortAsc.toString() : "false"
+        };
+        const cacheKey = `Customer_getListWithDefectCountsByUserId_${JSON.stringify(params)}`;
+        return await JC_GetRawCached<(CustomerModel & { DefectCount: number })[]>(`${CustomerModel.apiRoute}/getListWithDefectCountsByUserId`, params, cacheKey, CustomerModel.cacheMinutes_getList);
+    }
     static async Create(data: CustomerModel) {
         let response = await JC_Put<CustomerModel>(CustomerModel, CustomerModel.apiRoute, data);
         return response;

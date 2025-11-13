@@ -122,9 +122,9 @@ Only return the JSON. If no issues are found, respond with:
         ];
 
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-5",
             messages,
-            max_tokens: 800
+            max_completion_tokens: 10000
         });
 
         const text = response.choices[0].message.content || "";

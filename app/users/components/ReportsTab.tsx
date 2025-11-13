@@ -1,19 +1,16 @@
 "use client";
 
-import { JC_Utils } from "../../Utils";
-import { JC_Utils_Dates } from "../../Utils";
+import { JC_Utils, JC_Utils_Dates } from "../../Utils";
 import JC_Field from "../../components/JC_Field/JC_Field";
 import JC_FormTablet, { JC_FormTabletModel } from "../../components/JC_FormTablet/JC_FormTablet";
 import JC_Spinner from "../../components/JC_Spinner/JC_Spinner";
 import { FieldTypeEnum } from "../../enums/FieldType";
 import { LocalStorageKeyEnum } from "../../enums/LocalStorageKey";
 import { CustomerModel } from "../../models/Customer";
-import { CustomerDefectModel } from "../../models/CustomerDefect";
 import { O_ReportTypeModel } from "../../models/O_ReportType";
 import styles from "../page.module.scss";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function ReportsTab() {
     const session = useSession();
@@ -43,17 +40,29 @@ export default function ReportsTab() {
         }, 100);
     }, []);
 
-    // Load defect counts for all customers
-    const loadDefectCounts = useCallback(async (customerList: CustomerModel[]) => {
+    // Load customers with defect counts in a single optimized call
+    const loadCustomersWithDefectCounts = useCallback(async () => {
         try {
+            // Use the optimized method that gets customers and defect counts in one SQL call
+            const customersWithCounts = await CustomerModel.GetListForEmployeesWithDefectCounts("ModifiedAt", false);
+
+            // Convert to CustomerModel instances and extract defect counts
+            const customerList = customersWithCounts.map(c => new CustomerModel(c));
             const counts: Record<string, number> = {};
-            for (const customer of customerList) {
-                const defects = await CustomerDefectModel.GetByCustomerId(customer.Id);
-                counts[customer.Id] = defects.ResultList.length;
-            }
+
+            customersWithCounts.forEach(c => {
+                counts[c.Id] = c.DefectCount;
+            });
+
+            setCustomers(customerList);
             setDefectCounts(counts);
+
+            return customerList;
         } catch (error) {
-            console.error("Error loading defect counts:", error);
+            console.error("Error loading customers with defect counts:", error);
+            setCustomers([]);
+            setDefectCounts({});
+            return [];
         }
     }, []);
 
@@ -74,18 +83,14 @@ export default function ReportsTab() {
                     setReportTypeOptions(reportTypes.ResultList);
                 }
 
-                // Load customers for employees of admin
-                const customersResult = await CustomerModel.GetListForEmployeesOfAdmin();
-                setCustomers(customersResult.ResultList);
-
-                // Load defect counts
-                await loadDefectCounts(customersResult.ResultList);
+                // Load customers with defect counts in a single optimized call
+                const customerList = await loadCustomersWithDefectCounts();
 
                 // Check if there's a selected customer in localStorage
                 const selectedCustomerId = localStorage.getItem(LocalStorageKeyEnum.JC_SelectedCustomer);
                 if (selectedCustomerId) {
                     // Find the customer in the loaded list
-                    const selectedCustomer = customersResult.ResultList.find(c => c.Id === selectedCustomerId);
+                    const selectedCustomer = customerList.find(c => c.Id === selectedCustomerId);
                     if (selectedCustomer) {
                         // Check if this customer exists and is not deleted
                         const customerExists = await CustomerModel.ItemExists(selectedCustomerId);
@@ -121,7 +126,7 @@ export default function ReportsTab() {
             }
         };
         init();
-    }, [session.data, loadDefectCounts, scrollToSelectedCustomer]);
+    }, [session.data, loadCustomersWithDefectCounts, scrollToSelectedCustomer]);
 
     // Trigger header animation
     const triggerHeaderAnimation = () => {

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Get customers created by the current user with defect counts
+// Get customers created by a specific user with defect counts - for sub-user selection
 export async function GET(request: NextRequest) {
     try {
         unstable_noStore();
@@ -17,28 +17,50 @@ export async function GET(request: NextRequest) {
 
         const currentUser = session.user;
         const { searchParams } = new URL(request.url);
-
-        // Get sort parameters
+        const targetUserId = searchParams.get("userId");
         const sortField = searchParams.get("sortField") || "ModifiedAt";
         const sortAsc = searchParams.get("sortAsc") === "true";
-        const sortDirection = sortAsc ? "ASC" : "DESC";
 
-        // Build the ORDER BY clause dynamically
-        let orderByClause = "";
-        if (sortField === "ModifiedAt") {
-            orderByClause = `c."ModifiedAt" ${sortDirection} NULLS FIRST, c."CreatedAt" ${sortDirection} NULLS FIRST`;
-        } else if (sortField === "CreatedAt") {
-            orderByClause = `c."CreatedAt" ${sortDirection} NULLS FIRST, c."ModifiedAt" ${sortDirection} NULLS FIRST`;
-        } else if (sortField === "Address") {
-            orderByClause = `c."Address" ${sortDirection}`;
-        } else if (sortField === "ClientName") {
-            orderByClause = `c."ClientName" ${sortDirection}`;
-        } else {
-            // Default to ModifiedAt
-            orderByClause = `c."ModifiedAt" ${sortDirection} NULLS FIRST, c."CreatedAt" ${sortDirection} NULLS FIRST`;
+        if (!targetUserId) {
+            return NextResponse.json({ error: "userId parameter is required" }, { status: 400 });
         }
 
-        // Build the complete SQL query with dynamic ORDER BY
+        // Only allow access if:
+        // 1. User is an admin (EmployeeOfUserId is null) and targetUserId is one of their employees
+        // 2. User is requesting their own customers (targetUserId === currentUser.Id)
+        let isAuthorized = false;
+
+        if (targetUserId === currentUser.Id) {
+            // User is requesting their own customers
+            isAuthorized = true;
+        } else if (!currentUser.EmployeeOfUserId) {
+            // Current user is an admin, check if targetUserId is one of their employees
+            const employeeCheckQuery = `
+                SELECT "Id" FROM public."User" 
+                WHERE "Id" = $1 AND "EmployeeOfUserId" = $2 AND "Deleted" = 'False'
+            `;
+            const employeeResult = await sql.query(employeeCheckQuery, [targetUserId, currentUser.Id]);
+            isAuthorized = employeeResult.rows.length > 0;
+        }
+
+        if (!isAuthorized) {
+            return NextResponse.json({ error: "Access denied" }, { status: 403 });
+        }
+
+        // Build the ORDER BY clause
+        const allowedSortFields = ["Address", "InspectorName", "InspectorPhone", "InspectorQualification", "ClientName", "ClientPhone", "ClientEmail", "ReportTypeCode", "CreatedAt", "ModifiedAt", "DefectCount"];
+
+        let orderByClause = `c."ModifiedAt" DESC`;
+        if (allowedSortFields.includes(sortField)) {
+            const direction = sortAsc ? "ASC" : "DESC";
+            if (sortField === "DefectCount") {
+                orderByClause = `COALESCE(defect_counts.defect_count, 0) ${direction}`;
+            } else {
+                orderByClause = `c."${sortField}" ${direction}`;
+            }
+        }
+
+        // Query to get customers with defect counts for the specified user
         const queryText = `
             SELECT
                 c."Id",
@@ -90,19 +112,9 @@ export async function GET(request: NextRequest) {
             ORDER BY ${orderByClause}
         `;
 
-        const result = await sql.query(queryText, [currentUser.Id]);
+        const result = await sql.query(queryText, [targetUserId]);
 
-        return NextResponse.json(
-            {
-                result: {
-                    ResultList: result.rows,
-                    TotalCount: result.rows.length,
-                    PageIndex: 0,
-                    PageSize: result.rows.length
-                }
-            },
-            { status: 200 }
-        );
+        return NextResponse.json(result.rows, { status: 200 });
     } catch (error) {
         console.log(error);
         return NextResponse.json({ error }, { status: 500 });

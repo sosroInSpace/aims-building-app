@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Get customers created by the current user with defect counts
+// Get customers created by employees under the current admin with defect counts - optimized for users page
 export async function GET(request: NextRequest) {
     try {
         unstable_noStore();
@@ -17,6 +17,11 @@ export async function GET(request: NextRequest) {
 
         const currentUser = session.user;
         const { searchParams } = new URL(request.url);
+
+        // Only allow access if user is an admin (EmployeeOfUserId is null)
+        if (currentUser.EmployeeOfUserId) {
+            return NextResponse.json({ error: "Access denied" }, { status: 403 });
+        }
 
         // Get sort parameters
         const sortField = searchParams.get("sortField") || "ModifiedAt";
@@ -75,8 +80,15 @@ export async function GET(request: NextRequest) {
                 c."CreatedAt",
                 c."ModifiedAt",
                 c."Deleted",
-                COALESCE(defect_counts.defect_count, 0) as "DefectCount"
+                COALESCE(defect_counts.defect_count, 0) as "DefectCount",
+                u."FirstName" as "Ex_UserFirstName",
+                u."LastName" as "Ex_UserLastName",
+                u."Email" as "Ex_UserEmail",
+                u."Phone" as "Ex_UserPhone",
+                u."CompanyName" as "Ex_UserCompanyName",
+                u."Qualification" as "Ex_UserQualification"
             FROM public."Customer" c
+            INNER JOIN public."User" u ON c."UserId" = u."Id"
             LEFT JOIN (
                 SELECT
                     "CustomerId",
@@ -85,24 +97,15 @@ export async function GET(request: NextRequest) {
                 WHERE "Deleted" = 'False'
                 GROUP BY "CustomerId"
             ) defect_counts ON c."Id" = defect_counts."CustomerId"
-            WHERE c."UserId" = $1
+            WHERE u."EmployeeOfUserId" = $1
               AND c."Deleted" = 'False'
+              AND u."Deleted" = 'False'
             ORDER BY ${orderByClause}
         `;
 
         const result = await sql.query(queryText, [currentUser.Id]);
 
-        return NextResponse.json(
-            {
-                result: {
-                    ResultList: result.rows,
-                    TotalCount: result.rows.length,
-                    PageIndex: 0,
-                    PageSize: result.rows.length
-                }
-            },
-            { status: 200 }
-        );
+        return NextResponse.json(result.rows, { status: 200 });
     } catch (error) {
         console.log(error);
         return NextResponse.json({ error }, { status: 500 });

@@ -11,5 +11,6 @@ export enum LocalStorageKeyEnum {
     JC_ColorHistory = "JC_ColorHistory",
     JC_SelectedDefect = "JC_SelectedDefect",
     JC_SelectedCustomer = "JC_SelectedCustomer",
+    JC_SelectedSubUserId = "JC_SelectedSubUserId",
     JC_AnnotationColor = "JC_AnnotationColor"
 }

@@ -1,5 +1,6 @@
 import { auth } from "./auth";
 import JC_Header from "./components/JC_Header/JC_Header";
+import JC_SelectedSubUserDisplay from "./components/JC_SelectedSubUserDisplay/JC_SelectedSubUserDisplay";
 import PWAHead from "./components/PWAHead";
 import PWAInstaller from "./components/PWAInstaller";
 import styles from "./layout.module.scss";
@@ -98,6 +99,9 @@ export default async function Layout_Root({
                         </div>
                     )}
                 </div>
+
+                {/* Selected Sub-User Display - only show when content is shown and header/footer are not hidden */}
+                {showContent && !hideHeaderFooter && <JC_SelectedSubUserDisplay />}
 
                 {!showContent && <TempComingSoon />}
 

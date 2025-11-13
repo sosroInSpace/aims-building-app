@@ -35,7 +35,6 @@ export default function DefectsPage() {
     const [customerId, setCustomerId] = useState<string | null>(null);
     const [customer, setCustomer] = useState<CustomerModel | null>(null);
     const [defectsList, setDefectsList] = useState<CustomerDefectModel[]>([]);
-    const [defectImages, setDefectImages] = useState<DefectImageModel[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     // Track sort order counters for each defect to handle multiple simultaneous uploads
@@ -122,7 +121,9 @@ export default function DefectsPage() {
                     // Load defects for this customer with image counts in a single optimized SQL call
                     const defectsWithImageCounts = await CustomerDefectModel.GetByCustomerIdWithImageCounts(selectedCustomerId);
                     if (defectsWithImageCounts && defectsWithImageCounts.length > 0) {
-                        setDefectsList(defectsWithImageCounts);
+                        // Convert plain objects to proper CustomerDefectModel instances to preserve constructor and apiRoute
+                        const defectInstances = defectsWithImageCounts.map(defect => new CustomerDefectModel(defect));
+                        setDefectsList(defectInstances);
                         setCustomerId(selectedCustomerId);
 
                         // Initialize sort order counters for each defect based on image counts
@@ -133,13 +134,9 @@ export default function DefectsPage() {
                             counters.set(defect.Id, defect.ImageCount || 0);
                         }
                         setDefectSortOrderCounters(counters);
-
-                        // Clear defectImages since we're not loading them upfront anymore
-                        setDefectImages([]);
                     } else {
                         // No defects found, but customer exists
                         setDefectsList([]);
-                        setDefectImages([]);
                         setCustomerId(selectedCustomerId);
 
                         // Clear sort order counters
@@ -414,9 +411,6 @@ export default function DefectsPage() {
             // Remove the defect from the front-end list
             setDefectsList(prevDefects => prevDefects.filter(d => d.Id !== defect.Id));
 
-            // Also remove any associated images from the state
-            setDefectImages(prevImages => prevImages.filter(img => img.DefectId !== defect.Id));
-
             JC_Utils.showToastSuccess("Defect deleted successfully");
         } catch (error) {
             console.error("Error deleting defect:", error);
@@ -429,8 +423,8 @@ export default function DefectsPage() {
     // Handle Use AI callback for manual override action button
     const handleUseAICallback = useCallback(
         async (defect: CustomerDefectModel): Promise<any> => {
-            // Check if defect has photos
-            const defectImageCount = JC_Utils_Defects.countDefectImages(defect.Id, defectImages);
+            // Check if defect has photos using the same backend-derived count as the "Imgs" column
+            const defectImageCount = JC_Utils_Defects.countDefectImagesFromDefectOptimized(defect);
 
             if (defectImageCount === 0) {
                 JC_Utils.showToastError("No photos yet!");
@@ -447,7 +441,7 @@ export default function DefectsPage() {
                 (window as any).aiCallbackResolve = resolve;
             });
         },
-        [defectImages]
+        [] // Remove defectImages dependency since we're using the optimized count from the defect object
     );
 
     // Handle AI confirmation

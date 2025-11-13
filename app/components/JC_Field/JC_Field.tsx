@@ -12,7 +12,7 @@ import TextStyle from "@tiptap/extension-text-style";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 // Helper function to format numbers with optional hiding of trailing zeros
 function formatNumberWithDecimalPlaces(value: number, decimalPlaces: number = 2, hideTrailingZeros: boolean = true): string {

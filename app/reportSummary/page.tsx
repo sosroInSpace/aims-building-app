@@ -1,8 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import { JC_Utils, JC_Utils_Dates } from "../Utils";
 import JC_Button from "../components/JC_Button/JC_Button";
 import JC_Form from "../components/JC_Form/JC_Form";
@@ -21,6 +18,9 @@ import { O_OverallConditionModel } from "../models/O_OverallCondition";
 import { O_RiskOfUndetectedDefectsModel } from "../models/O_RiskOfUndetectedDefects";
 import { O_SummaryModel } from "../models/O_Summary";
 import styles from "./page.module.scss";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 export default function ReportSummaryPage() {
     const router = useRouter();

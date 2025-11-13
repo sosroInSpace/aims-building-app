@@ -22,6 +22,38 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Missing customerId parameter" }, { status: 400 });
         }
 
+        const currentUser = session.user;
+
+        // First, get the customer to check who created it
+        const customerQuery = `SELECT "UserId" FROM public."Customer" WHERE "Id" = $1 AND "Deleted" = 'False'`;
+        const customerResult = await sql.query(customerQuery, [customerId]);
+
+        if (customerResult.rows.length === 0) {
+            return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+        }
+
+        const customerUserId = customerResult.rows[0].UserId;
+
+        // Check authorization: user can access if they created the customer OR if they're an admin and the customer was created by their employee
+        let isAuthorized = false;
+
+        if (customerUserId === currentUser.Id) {
+            // User created this customer themselves
+            isAuthorized = true;
+        } else if (!currentUser.EmployeeOfUserId) {
+            // Current user is an admin, check if customerUserId is one of their employees
+            const employeeCheckQuery = `
+                SELECT "Id" FROM public."User"
+                WHERE "Id" = $1 AND "EmployeeOfUserId" = $2 AND "Deleted" = 'False'
+            `;
+            const employeeResult = await sql.query(employeeCheckQuery, [customerUserId, currentUser.Id]);
+            isAuthorized = employeeResult.rows.length > 0;
+        }
+
+        if (!isAuthorized) {
+            return NextResponse.json({ error: "Customer not found or access denied" }, { status: 404 });
+        }
+
         // Build the complete SQL query to get customer data and all option data in one call
         const queryText = `
             WITH customer_data AS (
@@ -67,7 +99,6 @@ export async function GET(request: NextRequest) {
                     c."Deleted"
                 FROM public."Customer" c
                 WHERE c."Id" = $1
-                  AND c."UserId" = $2
                   AND c."Deleted" = 'False'
             ),
             overall_condition_options AS (
@@ -153,7 +184,7 @@ export async function GET(request: NextRequest) {
             CROSS JOIN risk_options ro
         `;
 
-        const result = await sql.query(queryText, [customerId, session.user.Id]);
+        const result = await sql.query(queryText, [customerId]);
 
         if (result.rows.length === 0) {
             return NextResponse.json({ error: "Customer not found or access denied" }, { status: 404 });

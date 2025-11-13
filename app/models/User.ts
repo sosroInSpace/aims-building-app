@@ -37,8 +37,14 @@ export class UserModel extends _Base implements _ModelRequirements {
     static async GetAdminUsers(paging?: JC_ListPagingModel, abortSignal?: AbortSignal) {
         return await JC_GetList<UserModel>(UserModel, `${UserModel.apiRoute}/getAdminUsers`, paging, {}, abortSignal);
     }
-    static async GetEmployeeUsersForAdmin(paging?: JC_ListPagingModel, abortSignal?: AbortSignal) {
-        return await JC_GetList<UserModel>(UserModel, `${UserModel.apiRoute}/getEmployeeUsersForAdmin`, paging, {}, abortSignal);
+    static async GetEmployeeUsersForAdminWithReportCounts(sortField?: string, sortAsc?: boolean) {
+        const { JC_GetRawCached } = await import("../apiServices/JC_GetRaw");
+        const params = {
+            sortField: sortField || "ModifiedAt",
+            sortAsc: sortAsc !== undefined ? sortAsc.toString() : "false"
+        };
+        const cacheKey = `User_getEmployeeUsersForAdminWithReportCounts_${JSON.stringify(params)}`;
+        return await JC_GetRawCached<(UserModel & { ReportCount: number; QualificationCount: number })[]>(`${UserModel.apiRoute}/getEmployeeUsersForAdminWithReportCounts`, params, cacheKey, 5);
     }
     static async Create(data: UserModel) {
         return await JC_Put<UserModel>(UserModel, UserModel.apiRoute, data);
@@ -92,6 +98,8 @@ export class UserModel extends _Base implements _ModelRequirements {
     Ex_EmployeeOfUserName?: string;
     Ex_ReportTypeCodesList?: string[];
     Ex_ReportTypeList?: O_ReportTypeModel[];
+    ReportCount?: number;
+    QualificationCount?: number;
 
     // Extended Fields (required by _ModelRequirements interface)
     ExtendedFields: _ExtendedField[] = [

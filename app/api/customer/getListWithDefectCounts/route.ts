@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Get customers created by the current user with defect counts
+// Get customers created by the current user with defect counts - optimized for customer page
 export async function GET(request: NextRequest) {
     try {
         unstable_noStore();
@@ -92,17 +92,7 @@ export async function GET(request: NextRequest) {
 
         const result = await sql.query(queryText, [currentUser.Id]);
 
-        return NextResponse.json(
-            {
-                result: {
-                    ResultList: result.rows,
-                    TotalCount: result.rows.length,
-                    PageIndex: 0,
-                    PageSize: result.rows.length
-                }
-            },
-            { status: 200 }
-        );
+        return NextResponse.json(result.rows, { status: 200 });
     } catch (error) {
         console.log(error);
         return NextResponse.json({ error }, { status: 500 });

@@ -6,7 +6,6 @@ import JC_Tabs from "../components/JC_Tabs/JC_Tabs";
 import { LocalStorageKeyEnum } from "../enums/LocalStorageKey";
 import { O_ReportTypeModel } from "../models/O_ReportType";
 import RegisterTab from "./components/RegisterTab";
-import ReportsTab from "./components/ReportsTab";
 import UsersTab from "./components/UsersTab";
 import styles from "./page.module.scss";
 import { useSession } from "next-auth/react";
@@ -63,10 +62,6 @@ export default function Page_Users() {
                     {
                         title: "Users",
                         body: <UsersTab reportTypeOptions={reportTypeOptions} />
-                    },
-                    {
-                        title: "Reports",
-                        body: <ReportsTab />
                     },
                     {
                         title: "Register",

@@ -46,6 +46,8 @@ export interface JC_FormTabletModel {
     panesSwitched?: boolean;
     noSelectionViewOverride?: React.ReactElement;
     noSelectionHeaderOverride?: string;
+    customNode?: React.ReactElement;
+    fieldsCustomNode?: React.ReactElement;
     additionalFooterButtons?: Array<{
         text: string;
         onClick: () => void;
@@ -73,6 +75,7 @@ export interface JC_FormTabletModel {
     customerId?: string;
     customer?: any; // Customer object to read/update CustomOrder field
     useContainerHeight?: boolean; // Use height: 100% instead of height: 100vh
+    hideHeader?: boolean; // Hide the header section
 }
 
 export interface JC_FormTabletSection {
@@ -1036,7 +1039,13 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                     console.warn(`Failed to get field type for ${fieldName} from model:`, error);
                 }
             } else {
-                console.warn(`No jcFieldTypeforField method found for item constructor:`, item.constructor?.name);
+                // Fallback: manually determine field type for known fields when constructor is lost
+                if (fieldName === "DefectFindingInformationOverride" || fieldName === "InformationOverride") {
+                    fieldType = FieldTypeEnum.Textarea;
+                } else if (fieldName === "DefectFindingNameOverride" || fieldName === "NameOverride") {
+                    fieldType = FieldTypeEnum.Text;
+                }
+                console.log(`Manual override fallback field type for ${fieldName}:`, fieldType);
             }
 
             // Determine the field value - if empty, populate with original option content
@@ -1254,18 +1263,17 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
             if (result && typeof result === "object") {
                 // Handle special case where AI returns DefectFindingListJson (for selecting option + overrides)
                 if (result.DefectFindingListJson) {
-                    // Update the main field (multi-select dropdown) with the AI selection
-                    const currentFieldKey = model.formList?.headers[manualOverrideModalFieldIndex]?.sortKey;
-                    if (currentFieldKey) {
-                        setManualOverrideModalItem((prev: any) => {
-                            if (prev) {
-                                const updatedItem = Object.create(Object.getPrototypeOf(prev));
-                                Object.assign(updatedItem, prev, { [currentFieldKey]: result.DefectFindingListJson });
-                                return updatedItem;
-                            }
-                            return prev;
-                        });
-                    }
+                    // Update the DefectFindingListJson field and set DefectFindingCode to "Other"
+                    setManualOverrideModalItem((prev: any) => {
+                        if (prev) {
+                            const updatedItem = Object.create(Object.getPrototypeOf(prev));
+                            Object.assign(updatedItem, prev, {
+                                DefectFindingListJson: result.DefectFindingListJson
+                            });
+                            return updatedItem;
+                        }
+                        return prev;
+                    });
                 }
 
                 // Update manual override fields
@@ -1527,14 +1535,16 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
     return (
         <div ref={containerRef} className={`${styles.mainContainer} ${model.useContainerHeight ? styles.containerHeight : ""}`}>
             {/* Header */}
-            <div className={styles.header}>
-                {(model.backButtonLink || model.backButtonCallback) && (
-                    <div className={styles.backButton} onClick={handleBackButtonClick}>
-                        <Image src="/icons/Arrow.webp" alt="Back" width={0} height={0} className={styles.backButtonIcon} unoptimized />
-                    </div>
-                )}
-                <h2 className={styles.headerLabel}>{model.headerLabel}</h2>
-            </div>
+            {!model.hideHeader && (
+                <div className={styles.header}>
+                    {(model.backButtonLink || model.backButtonCallback) && (
+                        <div className={styles.backButton} onClick={handleBackButtonClick}>
+                            <Image src="/icons/Arrow.webp" alt="Back" width={0} height={0} className={styles.backButtonIcon} unoptimized />
+                        </div>
+                    )}
+                    <h2 className={styles.headerLabel}>{model.headerLabel}</h2>
+                </div>
+            )}
 
             {/* Content Area */}
             {/* Content Area - Always use two-pane layout */}
@@ -1550,7 +1560,10 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                             </div>
                         )}
                     </div>
-                    {hasFormList ? (
+                    {model.fieldsCustomNode ? (
+                        // Custom Node Mode - Render custom content
+                        <div style={{ display: "flex", justifyContent: "center", width: "100%", overflowY: "auto" }}>{model.fieldsCustomNode}</div>
+                    ) : hasFormList ? (
                         // Form List Mode - Render table in left pane
                         <div className={styles.formListTableContainer}>
                             <table className={styles.formListTable}>
@@ -2458,6 +2471,8 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                                 </>
                             )}
                         </div>
+                    ) : model.customNode ? (
+                        model.customNode
                     ) : model.noSelectionViewOverride ? (
                         model.noSelectionViewOverride
                     ) : (

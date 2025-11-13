@@ -7,7 +7,6 @@ import JC_Spinner from "../components/JC_Spinner/JC_Spinner";
 import { FieldTypeEnum } from "../enums/FieldType";
 import { LocalStorageKeyEnum } from "../enums/LocalStorageKey";
 import { CustomerModel } from "../models/Customer";
-import { CustomerDefectModel } from "../models/CustomerDefect";
 import { O_ReportTypeModel } from "../models/O_ReportType";
 import { UserModel } from "../models/User";
 import styles from "./page.module.scss";
@@ -47,27 +46,35 @@ export default function CustomerPage() {
         }, 100); // Small delay to ensure DOM is updated
     }, []);
 
-    // Load defect counts for all customers
-    const loadDefectCounts = useCallback(async (customerList: CustomerModel[]) => {
+    // Load customers with defect counts in a single optimized call
+    const loadCustomersWithDefectCounts = useCallback(async () => {
         try {
+            // Check if there's a selected sub-user
+            const selectedSubUserId = localStorage.getItem(LocalStorageKeyEnum.JC_SelectedSubUserId);
+            let customersWithCounts: (CustomerModel & { DefectCount: number })[];
+
+            if (selectedSubUserId) {
+                // Load customers for the selected sub-user
+                customersWithCounts = await CustomerModel.GetListWithDefectCountsByUserId(selectedSubUserId, "ModifiedAt", false);
+            } else {
+                // Load customers for the current logged-in user
+                customersWithCounts = await CustomerModel.GetListWithDefectCounts("ModifiedAt", false);
+            }
+
+            // Convert to CustomerModel instances and extract defect counts
+            const customerList = customersWithCounts.map(c => new CustomerModel(c));
             const counts: Record<string, number> = {};
 
-            // Load defect counts for each customer
-            await Promise.all(
-                customerList.map(async customer => {
-                    try {
-                        const defects = await CustomerDefectModel.GetByCustomerId(customer.Id);
-                        counts[customer.Id] = defects.ResultList.length;
-                    } catch (error) {
-                        console.error(`Error loading defects for customer ${customer.Id}:`, error);
-                        counts[customer.Id] = 0;
-                    }
-                })
-            );
+            customersWithCounts.forEach(c => {
+                counts[c.Id] = c.DefectCount;
+            });
 
+            setCustomers(customerList);
             setDefectCounts(counts);
         } catch (error) {
-            console.error("Error loading defect counts:", error);
+            console.error("Error loading customers with defect counts:", error);
+            setCustomers([]);
+            setDefectCounts({});
         }
     }, []);
 
@@ -79,23 +86,8 @@ export default function CustomerPage() {
             // Check if there's a selected customer in localStorage
             const selectedCustomerId = localStorage.getItem(LocalStorageKeyEnum.JC_SelectedCustomer);
 
-            // Load customers for the Reports pane, sorted by ModifiedAt desc and CreatedAt desc
-            try {
-                const result = await CustomerModel.GetList({
-                    Sorts: [
-                        { SortField: "ModifiedAt", SortAsc: false, nullsFirst: true },
-                        { SortField: "CreatedAt", SortAsc: false, nullsFirst: true }
-                    ]
-                });
-                const customerList = Array.isArray(result.ResultList) ? result.ResultList : [];
-                setCustomers(customerList);
-
-                // Load defect counts for all customers
-                await loadDefectCounts(customerList);
-            } catch (error) {
-                console.error("Error fetching customers:", error);
-                setCustomers([]);
-            }
+            // Load customers with defect counts in a single optimized call
+            await loadCustomersWithDefectCounts();
 
             // Load report type options - filter by user's qualifications only if user is not an admin
             try {
@@ -153,8 +145,32 @@ export default function CustomerPage() {
                 // No selected customer, prepare for new customer creation
                 setSelectedCustomerId(null);
 
-                // Auto-populate inspector fields with current user data for new customers
-                if (session.data?.user) {
+                // Auto-populate inspector fields with user data for new customers
+                // Use selected sub-user data if available, otherwise use current logged-in user
+                const selectedSubUserId = localStorage.getItem(LocalStorageKeyEnum.JC_SelectedSubUserId);
+
+                if (selectedSubUserId) {
+                    // Use selected sub-user's data
+                    try {
+                        const subUserData = await UserModel.Get(selectedSubUserId);
+                        if (subUserData) {
+                            const inspectorName = `${subUserData.FirstName} ${subUserData.LastName}`.trim();
+                            setCurrentCustomer(
+                                prev =>
+                                    new CustomerModel({
+                                        ...prev,
+                                        UserId: selectedSubUserId,
+                                        InspectorName: inspectorName,
+                                        InspectorPhone: subUserData.Phone || "",
+                                        InspectorQualification: subUserData.Qualification || ""
+                                    })
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Error loading sub-user data:", error);
+                    }
+                } else if (session.data?.user) {
+                    // Use current logged-in user's data
                     const user = session.data.user;
                     const inspectorName = `${user.FirstName} ${user.LastName}`.trim();
 
@@ -162,6 +178,7 @@ export default function CustomerPage() {
                         prev =>
                             new CustomerModel({
                                 ...prev,
+                                UserId: user.Id,
                                 InspectorName: inspectorName,
                                 InspectorPhone: user.Phone || "",
                                 InspectorQualification: user.Qualification || ""
@@ -175,7 +192,7 @@ export default function CustomerPage() {
             setIsLoading(false);
             setInitialised(true);
         }
-    }, [session.data, loadDefectCounts, scrollToSelectedCustomer]);
+    }, [session.data, loadCustomersWithDefectCounts, scrollToSelectedCustomer]);
 
     // Load data on mount
     useEffect(() => {
@@ -189,6 +206,31 @@ export default function CustomerPage() {
             localStorage.setItem(LocalStorageKeyEnum.JC_ShowLoggedInWelcome, "0");
         }
     }, [session.data]);
+
+    // Listen for sub-user selection changes
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === LocalStorageKeyEnum.JC_SelectedSubUserId) {
+                // Reload customers when sub-user selection changes
+                loadCustomersWithDefectCounts();
+            }
+        };
+
+        const handleCustomStorageChange = () => {
+            // Reload customers when sub-user selection changes (same-tab)
+            loadCustomersWithDefectCounts();
+        };
+
+        // Listen for storage events from other tabs/windows
+        window.addEventListener("storage", handleStorageChange);
+        // Listen for custom events from same tab
+        window.addEventListener("localStorageChange", handleCustomStorageChange);
+
+        return () => {
+            window.removeEventListener("storage", handleStorageChange);
+            window.removeEventListener("localStorageChange", handleCustomStorageChange);
+        };
+    }, [loadCustomersWithDefectCounts]);
 
     // Trigger header animation
     const triggerHeaderAnimation = () => {
@@ -295,10 +337,14 @@ export default function CustomerPage() {
                 // Add the new customer to the beginning of the front-end list without re-sorting
                 setCustomers(prevCustomers => {
                     const updatedCustomers = [newCustomer, ...prevCustomers];
-                    // Load defect counts for the updated customer list
-                    loadDefectCounts(updatedCustomers);
                     return updatedCustomers;
                 });
+
+                // Set defect count to 0 for new customer
+                setDefectCounts(prevCounts => ({
+                    ...prevCounts,
+                    [newCustomer.Id]: 0
+                }));
 
                 // Scroll to the newly created customer
                 scrollToSelectedCustomer(newCustomer.Id);
