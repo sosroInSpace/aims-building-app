@@ -6,7 +6,7 @@ const nextConfig = {
         NAME: process.env.NAME
     },
     // Disable font optimization to fix Inter font loading issues on Vercel
-    optimizeFonts: false,    
+    optimizeFonts: false,
     // Configure external image domains
     images: {
         remotePatterns: [
@@ -25,6 +25,12 @@ const nextConfig = {
             {
                 protocol: "https",
                 hostname: "inspection-report-pdf-bucket.s3.ap-southeast-2.amazonaws.com",
+                port: "",
+                pathname: "/**"
+            },
+            {
+                protocol: "https",
+                hostname: "aimsreporting.s3.ap-southeast-2.amazonaws.com",
                 port: "",
                 pathname: "/**"
             }

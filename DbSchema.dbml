@@ -93,7 +93,7 @@ Table CustomerDefect {
     AreaListJson                     varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
     LocationListJson                 varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
     OrientationCode                  varchar(50)  [    null, ref: > O_DefectOrientation.Code]
-    DefectFindingCode                varchar(50)  [    null, ref: > O_DefectFinding.Code]
+    DefectFindingCode                varchar(50)  [    null]
     DefectFindingNameOverride        varchar      [    null, note: 'Manual override for defect finding name.']
     DefectFindingInformationOverride varchar      [    null, note: 'Manual override for defect finding information.']
     SeverityListJson                 varchar      [    null, note: 'JSON array of objects with Code, NameOverride properties.']
