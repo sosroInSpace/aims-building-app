@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { JC_Utils, JC_Utils_Validation } from "../../Utils";
 import { JC_PostRaw } from "../../apiServices/JC_PostRaw";
 import JC_Button from "../../components/JC_Button/JC_Button";
@@ -18,7 +19,6 @@ import { D_FieldModel_ABN, D_FieldModel_Company, D_FieldModel_Email, D_FieldMode
 import { O_ReportTypeModel } from "../../models/O_ReportType";
 import { UserModel } from "../../models/User";
 import styles from "../page.module.scss";
-import { useCallback, useEffect, useState } from "react";
 
 interface UsersTabProps {
     reportTypeOptions: O_ReportTypeModel[];
@@ -50,6 +50,9 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
     // Delete User State
     const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState<boolean>(false);
     const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
+
+    // Clear Logo State
+    const [isClearLogoConfirmModalOpen, setIsClearLogoConfirmModalOpen] = useState<boolean>(false);
 
     // Password change modal state
     const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
@@ -403,6 +406,11 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
                         s3KeyPath="User/Logos"
                         targetUserId={selectedUser.Id}
                     />
+                    {!JC_Utils.stringNullOrEmpty(editLogoFileId) && (
+                        <div style={{ marginTop: "10px", display: "flex", justifyContent: "center" }}>
+                            <JC_Button text="Clear Logo" onClick={() => setIsClearLogoConfirmModalOpen(true)} isSmall={true} />
+                        </div>
+                    )}
                 </div>
 
                 {/* Two-Factor Authentication Field */}
@@ -490,6 +498,23 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
                     }
                 ]}
                 isLoading={isDeletingUser}
+            />
+
+            {/* Clear Logo Confirmation Modal */}
+            <JC_ModalConfirmation
+                title="Clear Logo"
+                text="Are you sure you want to clear the logo?"
+                isOpen={isClearLogoConfirmModalOpen}
+                onCancel={() => setIsClearLogoConfirmModalOpen(false)}
+                submitButtons={[
+                    {
+                        text: "Clear Logo",
+                        onSubmit: () => {
+                            setEditLogoFileId("");
+                            setIsClearLogoConfirmModalOpen(false);
+                        }
+                    }
+                ]}
             />
 
             {/* Password Change Modal */}

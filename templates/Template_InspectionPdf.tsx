@@ -338,8 +338,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         padding: 0;
                         color: #333;
                         line-height: 1.4;
-                        orphans: 3;
-                        widows: 3;
                         font-weight: 300;
                         -webkit-font-smoothing: antialiased;
                         -moz-osx-font-smoothing: grayscale;
@@ -418,7 +416,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        page-break-after: always;
                     }
 
                     .section-1-logo {
@@ -485,7 +482,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 2 Styles */
                     .section-2 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* contents-section styles moved to page break control section */
@@ -545,12 +542,12 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 3 Styles */
                     .section-3 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* Section 4 Styles */
                     .section-4 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     .inspection-table {
@@ -604,12 +601,12 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 5 Styles */
                     .section-5 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* Section 6 Styles */
                     .section-6 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* accessibility-section styles moved to page break control section */
@@ -643,7 +640,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 7 Styles */
                     .section-7 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* defect-item and defect-title styles moved to page break control section */
@@ -680,22 +677,22 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 8 Styles */
                     .section-8 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* Section 9 Styles */
                     .section-9 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* Section 10 Styles */
                     .section-10 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* Section 11 Styles */
                     .section-11 {
-                        /* Removed page-break-before to allow definitions to continue on same page */
+                        margin-top: 30px;
                     }
 
                     .definitions-table {
@@ -720,7 +717,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 12 Styles */
                     .section-12 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     /* terms-content p styles moved to page break control section */
@@ -730,7 +727,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-size: ${fontSizeBody};
                         margin: 20px 0 10px 0;
                         color: ${primaryColor};
-                        break-after: avoid;
                     }
 
                     .italic-text {
@@ -743,7 +739,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Inspector Section Styles */
                     .section-inspector {
-                        break-inside: avoid;
                         background-color: #0f264f !important;
                         min-height: ${isPreview ? "auto" : "100vh"};
                         height: ${isPreview ? "auto" : "100vh"};
@@ -899,7 +894,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 13 Styles */
                     .section-13 {
-                        page-break-before: always;
+                        margin-top: 30px;
                     }
 
                     .large-header {
@@ -993,68 +988,25 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
 
 
-                    /* Page break control styles */
-                    .no-page-break {
-                        page-break-inside: avoid;
-                        break-inside: avoid;
-                    }
-
-                    .page-break-before {
-                        page-break-before: always;
-                        break-before: always;
-                    }
-
-                    .page-break-after {
-                        page-break-after: always;
-                        break-after: always;
-                    }
-
-                    /* Prevent breaking of key content sections */
+                    /* Defect item styles */
                     .defect-item {
                         margin-bottom: ${marginLarge};
-                        /* Allow defect items to break across pages so images can flow naturally */
-                    }
-
-                    /* Keep section header group together (section title + severity title + first defect) */
-                    .section-header-group {
-                        break-inside: avoid;
-                    }
-
-                    /* Keep severity header with first defect together */
-                    .severity-group-header {
-                        break-inside: avoid;
-                    }
-
-                    /* Keep defect content (title and table) together */
-                    .defect-content {
-                        break-inside: avoid;
                     }
 
                     .accessibility-section {
                         margin-bottom: ${marginLarge};
-                        break-inside: avoid;
                     }
 
                     .contents-section {
                         margin-bottom: 20px;
-                        break-inside: avoid;
-                    }
-
-                    /* Allow definitions table to break across pages */
-                    .definitions-table {
-                        break-inside: auto;
                     }
 
                     /* Allow defect images container to break across pages */
                     .defect-images-container {
                         margin-top: 20px;
-                        page-break-after: always;
                     }
 
-                    /* Keep individual image rows together */
                     .defect-images-row {
-                        page-break-inside: avoid;
-                        break-inside: avoid;
                     }
 
                     /* Keep section titles with their content */
@@ -1070,7 +1022,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-weight: ${fontWeightBold};
                         color: ${secondaryColor};
                         margin-bottom: ${marginMedium};
-                        break-after: avoid;
                     }
 
                     .defect-title {
@@ -1078,57 +1029,40 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-weight: ${fontWeightBold};
                         color: ${secondaryColor};
                         margin-bottom: ${marginMedium};
-                        break-after: avoid;
                     }
 
-                    /* Keep certification items together */
                     .certification-item {
                         display: flex;
                         margin-bottom: 15px;
                         align-items: flex-start;
-                        break-inside: avoid;
                     }
 
-                    /* Keep terms content paragraphs together when possible */
                     .terms-content p {
                         margin-bottom: 15px;
                         text-align: justify;
                         line-height: 1.4;
-                        page-break-inside: avoid;
-                        break-inside: avoid;
-                        orphans: 2;
-                        widows: 2;
                     }
 
-                    /* Improve text flow for body text */
                     .body-text {
                         font-size: ${fontSizeBody};
                         line-height: 1.5;
                         color: #333;
                         margin-bottom: 30px;
                         text-align: justify;
-                        orphans: 2;
-                        widows: 2;
                     }
 
-                    /* Improve text flow for accessibility text */
                     .accessibility-text {
                         font-size: ${fontSizeBody};
                         color: ${offBlack};
                         line-height: 1.5;
                         margin-bottom: ${marginMedium};
-                        orphans: 2;
-                        widows: 2;
                     }
 
-                    /* Improve text flow for risk text */
                     .risk-text {
                         font-size: ${fontSizeBody};
                         color: ${offBlack};
                         line-height: 1.5;
                         margin-bottom: ${marginMedium};
-                        orphans: 2;
-                        widows: 2;
                     }
 
                     /* Print-specific styles */
@@ -1168,36 +1102,9 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                             display: block !important;
                         }
 
-                        .page-break-before {
-                            page-break-before: always;
-                        }
-
-                        .page-break-after {
-                            page-break-after: always;
-                        }
-
-                        .no-page-break {
-                            page-break-inside: avoid;
-                        }
-
                         .inspection-table .checkmark img {
                             -webkit-print-color-adjust: exact;
                             print-color-adjust: exact;
-                        }
-
-                        /* Additional print-specific page break controls */
-                        .accessibility-section,
-                        .contents-section,
-                        .certification-item,
-                        .defect-content,
-                        .section-header-group,
-                        .severity-group-header {
-                            page-break-inside: avoid;
-                        }
-
-                        /* Allow definitions table to break across pages in print */
-                        .definitions-table {
-                            page-break-inside: auto;
                         }
                     }
 
@@ -1649,8 +1556,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                     {renderDefectsBySeverity("Noted Item", groupedDefects["Noted Item"])}
                 </div>
             )}
-
-            <div style={{ pageBreakBefore: "always", breakBefore: "page" }} />
 
             {/* Section 11 - Definitions */}
             <div className="main-page section-11">
