@@ -71,8 +71,9 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
     // Check if we're in a server environment
     const isServer = typeof window === "undefined";
 
-    // Determine if we should use employee data (user is an employee and has data)
-    const isEmployee = userData && userData.EmployeeOfUserId;
+    // Determine if we should use employee/custom cover page (user is an employee AND has a logo)
+    // If the user is an employee but has no logo, we show the main AIMS cover page instead
+    const isEmployee = userData && userData.EmployeeOfUserId && userLogoBase64;
 
     // Helper variables for inspector information
     const inspectorName = isEmployee ? `${userData.FirstName} ${userData.LastName}`.trim() : "Gopan Mondal";
@@ -234,39 +235,53 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
         const severityNumber = severityMap[severityName] || "1";
 
+        // Render defect table content
+        const renderDefectTable = (defect: DefectWithImages) => (
+            <table className="defect-details-table">
+                <tbody>
+                    <tr>
+                        <td className="defect-label">Building:</td>
+                        <td className="defect-value">{defect.Ex_BuildingNamesList?.join(", ") || "-"}</td>
+                    </tr>
+                    <tr>
+                        <td className="defect-label">Location:</td>
+                        <td className="defect-value">{formatDefectLocation(defect)}</td>
+                    </tr>
+                    <tr>
+                        <td className="defect-label">Finding:</td>
+                        <td className="defect-value">{(defect as any).DefectFindingNameOverride || defect.Ex_DefectFindingName || "-"}</td>
+                    </tr>
+                    <tr>
+                        <td className="defect-label">Information:</td>
+                        <td className="defect-value">
+                            <div className="defect-information">{renderTextWithLineBreaks((defect as any).DefectFindingInformationOverride || (defect as any).Ex_DefectFindingInformation || defect.Name) || "-"}</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        );
+
         return (
             <>
-                <div className="section-title">{severityName}</div>
                 {sortedDefects.map((defect, index) => (
                     <div key={defect.Id} className="defect-item">
-                        <div className="defect-content no-page-break">
-                            <div className="defect-title">
-                                Defects {severityNumber}.{String(index + 1).padStart(2, "0")}
+                        {/* For first defect, include severity title - use keep-together class */}
+                        {index === 0 ? (
+                            <div>
+                                <div className="section-title">{severityName}</div>
+                                <div className="defect-title">
+                                    Defects {severityNumber}.{String(index + 1).padStart(2, "0")}
+                                </div>
+                                {renderDefectTable(defect)}
                             </div>
-
-                            <table className="defect-details-table">
-                                <tbody>
-                                    <tr>
-                                        <td className="defect-label">Building:</td>
-                                        <td className="defect-value">{defect.Ex_BuildingNamesList?.join(", ") || "-"}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="defect-label">Location:</td>
-                                        <td className="defect-value">{formatDefectLocation(defect)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="defect-label">Finding:</td>
-                                        <td className="defect-value">{(defect as any).DefectFindingNameOverride || defect.Ex_DefectFindingName || "-"}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="defect-label">Information:</td>
-                                        <td className="defect-value">
-                                            <div className="defect-information">{renderTextWithLineBreaks((defect as any).DefectFindingInformationOverride || (defect as any).Ex_DefectFindingInformation || defect.Name) || "-"}</div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        ) : (
+                            <div className="defect-content">
+                                <div className="defect-title">
+                                    Defects {severityNumber}.{String(index + 1).padStart(2, "0")}
+                                </div>
+                                {renderDefectTable(defect)}
+                            </div>
+                        )}
 
                         <div className="defect-images-container" style={{ marginTop: "20px" }}>
                             {renderDefectImages(defect.images)}
@@ -680,7 +695,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Section 11 Styles */
                     .section-11 {
-                        page-break-before: always;
+                        /* Removed page-break-before to allow definitions to continue on same page */
                     }
 
                     .definitions-table {
@@ -690,7 +705,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                     }
 
                     .definitions-table td {
-                        padding: 8px 12px;
                         vertical-align: top;
                     }
 
@@ -701,6 +715,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                     .definition-description {
                         width: 70%;
                         text-align: justify;
+                        padding-left: 20px;
                     }
 
                     /* Section 12 Styles */
@@ -715,7 +730,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-size: ${fontSizeBody};
                         margin: 20px 0 10px 0;
                         color: ${primaryColor};
-                        page-break-after: avoid;
                         break-after: avoid;
                     }
 
@@ -729,8 +743,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
 
                     /* Inspector Section Styles */
                     .section-inspector {
-                        page-break-after: always;
-                        page-break-inside: avoid;
                         break-inside: avoid;
                         background-color: #0f264f !important;
                         min-height: ${isPreview ? "auto" : "100vh"};
@@ -1003,38 +1015,40 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         /* Allow defect items to break across pages so images can flow naturally */
                     }
 
+                    /* Keep section header group together (section title + severity title + first defect) */
+                    .section-header-group {
+                        break-inside: avoid;
+                    }
+
+                    /* Keep severity header with first defect together */
+                    .severity-group-header {
+                        break-inside: avoid;
+                    }
+
                     /* Keep defect content (title and table) together */
                     .defect-content {
-                        page-break-inside: avoid;
                         break-inside: avoid;
                     }
 
                     .accessibility-section {
                         margin-bottom: ${marginLarge};
-                        page-break-inside: avoid;
                         break-inside: avoid;
                     }
 
                     .contents-section {
                         margin-bottom: 20px;
-                        page-break-inside: avoid;
                         break-inside: avoid;
                     }
 
-                    /* Prevent tables from breaking */
-                    .inspection-table,
-                    .general-table,
-                    .parties-table,
-                    .definitions-table,
-                    .contents-table,
-                    .defect-details-table {
-                        page-break-inside: avoid;
-                        break-inside: avoid;
+                    /* Allow definitions table to break across pages */
+                    .definitions-table {
+                        break-inside: auto;
                     }
 
                     /* Allow defect images container to break across pages */
                     .defect-images-container {
                         margin-top: 20px;
+                        page-break-after: always;
                     }
 
                     /* Keep individual image rows together */
@@ -1049,8 +1063,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-weight: ${fontWeightBold};
                         color: ${primaryColor};
                         margin-bottom: ${marginMedium};
-                        page-break-after: avoid;
-                        break-after: avoid;
                     }
 
                     .section-subtitle {
@@ -1058,7 +1070,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-weight: ${fontWeightBold};
                         color: ${secondaryColor};
                         margin-bottom: ${marginMedium};
-                        page-break-after: avoid;
                         break-after: avoid;
                     }
 
@@ -1067,7 +1078,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         font-weight: ${fontWeightBold};
                         color: ${secondaryColor};
                         margin-bottom: ${marginMedium};
-                        page-break-after: avoid;
                         break-after: avoid;
                     }
 
@@ -1076,7 +1086,6 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         display: flex;
                         margin-bottom: 15px;
                         align-items: flex-start;
-                        page-break-inside: avoid;
                         break-inside: avoid;
                     }
 
@@ -1180,28 +1189,15 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         .accessibility-section,
                         .contents-section,
                         .certification-item,
-                        .defect-content {
+                        .defect-content,
+                        .section-header-group,
+                        .severity-group-header {
                             page-break-inside: avoid;
                         }
 
-                        /* Keep individual image rows together in print */
-                        .defect-images-row {
-                            page-break-inside: avoid;
-                        }
-
-                        .inspection-table,
-                        .general-table,
-                        .parties-table,
-                        .definitions-table,
-                        .contents-table,
-                        .defect-details-table {
-                            page-break-inside: avoid;
-                        }
-
-                        .section-title,
-                        .section-subtitle,
-                        .defect-title {
-                            page-break-after: avoid;
+                        /* Allow definitions table to break across pages in print */
+                        .definitions-table {
+                            page-break-inside: auto;
                         }
                     }
 
@@ -1570,19 +1566,21 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                 </div>
             </div>
 
-            {/* Section 7 - Section D Significant Items */}
-            <div className="main-page section-7">
-                <div className="section-title">Section D Significant Items</div>
+            {/* Section 7 - Section D Significant Items - Only render if there are defects to display */}
+            {(groupedDefects["Safety Hazard"].length > 0 || groupedDefects["Major Defect"].length > 0 || groupedDefects["Minor Defect"].length > 0) && (
+                <div className="main-page section-7">
+                    <div className="section-title">Section D Significant Items</div>
 
-                {/* Render Safety Hazards */}
-                {renderDefectsBySeverity("Safety Hazard", groupedDefects["Safety Hazard"])}
+                    {/* Render Safety Hazards */}
+                    {renderDefectsBySeverity("Safety Hazard", groupedDefects["Safety Hazard"])}
 
-                {/* Render Major Defects */}
-                {renderDefectsBySeverity("Major Defect", groupedDefects["Major Defect"])}
+                    {/* Render Major Defects */}
+                    {renderDefectsBySeverity("Major Defect", groupedDefects["Major Defect"])}
 
-                {/* Render Minor Defects */}
-                {renderDefectsBySeverity("Minor Defect", groupedDefects["Minor Defect"])}
-            </div>
+                    {/* Render Minor Defects */}
+                    {renderDefectsBySeverity("Minor Defect", groupedDefects["Minor Defect"])}
+                </div>
+            )}
 
             {/* Section 8 - Section D Significant Items (Continued) */}
             <div className="main-page section-8">
@@ -1628,7 +1626,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
             </div>
 
             {/* Section 9 - Section E Attachments and Further Comments */}
-            <div className="main-page section-9">
+            {/* <div className="main-page section-9">
                 <div className="section-title">Section E Attachments and Further Comments</div>
 
                 <div className="body-text" style={{ marginTop: marginLarge }}>
@@ -1638,23 +1636,27 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                 <div className="body-text" style={{ marginTop: marginLarge }}>
                     - Definitions
                 </div>
-            </div>
+            </div> */}
 
-            {/* Section 10 - Section D Significant Items (Noted Items) */}
-            <div className="main-page section-10">
-                <div className="section-title">Section D Significant Items</div>
+            {/* Section 10 - Section D Significant Items (Noted Items) - Only render if there are noted items */}
+            {groupedDefects["Noted Item"] && groupedDefects["Noted Item"].length > 0 && (
+                <div className="main-page section-10">
+                    <div className="section-title">Section D Significant Items</div>
 
-                <div className="section-subtitle">The following items were noted as - For your information</div>
+                    <div className="section-subtitle">The following items were noted as - For your information</div>
 
-                {/* Render Noted Items */}
-                {renderDefectsBySeverity("Noted Item", groupedDefects["Noted Item"])}
-            </div>
+                    {/* Render Noted Items */}
+                    {renderDefectsBySeverity("Noted Item", groupedDefects["Noted Item"])}
+                </div>
+            )}
+
+            <div style={{ pageBreakBefore: "always", breakBefore: "page" }} />
 
             {/* Section 11 - Definitions */}
             <div className="main-page section-11">
                 <div className="section-title">Definitions to help you better understand this report</div>
 
-                <table className="definitions-table no-page-break">
+                <table className="definitions-table">
                     <tbody>
                         <tr>
                             <td className="definition-term">Access hole (cover)</td>
@@ -1690,67 +1692,43 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                         </tr>
                         <tr>
                             <td className="definition-term">Inspection</td>
-                            <td className="definition-description">Close and careful scrutiny of a building carried out without dismantling, in order to arrive at a reliable conclusion as to the condition of the building.</td>
+                            <td className="definition-description">Visual examination of the building to identify defects.</td>
                         </tr>
                         <tr>
                             <td className="definition-term">Inspector</td>
-                            <td className="definition-description">Person or organisation responsible for carrying out the inspection.</td>
-                        </tr>
-                        <tr>
-                            <td className="definition-term">Limitation</td>
-                            <td className="definition-description">Any factor that prevents full or proper inspection of the building.</td>
+                            <td className="definition-description">The person carrying out the inspection.</td>
                         </tr>
                         <tr>
                             <td className="definition-term">Major defect</td>
                             <td className="definition-description">A defect of sufficient magnitude where rectification has to be carried out in order to avoid unsafe conditions, loss of utility or further deterioration of the property.</td>
                         </tr>
                         <tr>
-                            <td className="definition-term">Methamphetamine</td>
-                            <td className="definition-description">An amphetamine-type stimulant that is highly addictive. Methamphetamine is a controlled substance, classified as a Class A (very high-risk) drug under the Misuse of Drug Act. This term is used as a grouping term to include all substances screened for, specifically: Ephedrine, Pseudoephedrine,Amphetamine, Methamphetamine, MDA and MDMA.</td>
-                        </tr>
-                        <tr>
-                            <td className="definition-term">Methamphetamine contamination</td>
-                            <td className="definition-description">A property or part of a property where the level of methamphetamine has been tested in accordance with this standard and found to exceed 0.5 micrograms/100 cm2 (Residential) or 10 micrograms/100 cm2 (Commercial).</td>
-                        </tr>
-                        <tr>
-                            <td className="definition-term">Methamphetamine production/manufacture</td>
-                            <td className="definition-description">The manufacture of methamphetamine, including processing, packaging, and storage of methamphetamine and associated chemicals.</td>
-                        </tr>
-                        <tr>
                             <td className="definition-term">Minor defect</td>
-                            <td className="definition-description">A defect other than a major defect.</td>
+                            <td className="definition-description">A defect that could lead to deterioration in the condition of the building or cause problems in the future, but is not considered to be of sufficient magnitude to warrant immediate rectification.</td>
                         </tr>
                         <tr>
-                            <td className="definition-term">Roof space/Roof void</td>
-                            <td className="definition-description">Space between the roof covering and the ceiling immediately below the roof covering.</td>
+                            <td className="definition-term">Noted item</td>
+                            <td className="definition-description">An observation or comment that does not necessarily indicate a defect.</td>
                         </tr>
                         <tr>
-                            <td className="definition-term">Screening assessment</td>
-                            <td className="definition-description">An assessment by a screening sampler to determine whether or not methamphetamine is present.</td>
+                            <td className="definition-term">Property</td>
+                            <td className="definition-description">The subject of the inspection.</td>
                         </tr>
                         <tr>
-                            <td className="definition-term">Serviceability defect</td>
-                            <td className="definition-description">Fault or deviation from the intended serviceability performance of a building element.</td>
+                            <td className="definition-term">Report</td>
+                            <td className="definition-description">The document and any attachments prepared as a result of the inspection.</td>
                         </tr>
                         <tr>
-                            <td className="definition-term">Significant item</td>
-                            <td className="definition-description">An item that is to be reported in accordance with the scope of the inspection.</td>
+                            <td className="definition-term">Residential property</td>
+                            <td className="definition-description">A building or part of a building used or intended to be used as a place of residence.</td>
                         </tr>
                         <tr>
-                            <td className="definition-term">Site</td>
-                            <td className="definition-description">Allotment of land on which a building stands or is to be erected.</td>
-                        </tr>
-                        <tr>
-                            <td className="definition-term">Structural defect</td>
-                            <td className="definition-description">Fault or deviation from the intended structural performance of a building element.</td>
+                            <td className="definition-term">Safety hazard</td>
+                            <td className="definition-description">Building elements or situations that present a current or immediate potential threat of injury or disease to persons.</td>
                         </tr>
                         <tr>
                             <td className="definition-term">Structural element</td>
-                            <td className="definition-description">Physically distinguishable part of a structure. NOTE: For example wall, columns, beam, connection.</td>
-                        </tr>
-                        <tr>
-                            <td className="definition-term">Subfloor space</td>
-                            <td className="definition-description">Space between the underside of a suspended floor and the ground.</td>
+                            <td className="definition-description">A building element that is part of the load bearing structure of the building.</td>
                         </tr>
                         <tr>
                             <td className="definition-term">Urgent and Serious Safety Hazards</td>
