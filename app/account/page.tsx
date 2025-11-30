@@ -1,5 +1,7 @@
 "use client";
 
+import { signOut, useSession } from "next-auth/react";
+import React, { useEffect, useState } from "react";
 import { JC_Utils, JC_Utils_Validation } from "../Utils";
 import { JC_Post } from "../apiServices/JC_Post";
 import { JC_PostRaw } from "../apiServices/JC_PostRaw";
@@ -18,8 +20,6 @@ import { D_FieldModel_ABN, D_FieldModel_Company, D_FieldModel_Email, D_FieldMode
 import { GlobalSettingsModel } from "../models/GlobalSettings";
 import { UserModel } from "../models/User";
 import styles from "./page.module.scss";
-import { signOut, useSession } from "next-auth/react";
-import React, { useEffect, useState } from "react";
 
 export default function Page_Account() {
     // - STATE - //
@@ -37,6 +37,8 @@ export default function Page_Account() {
     const [abn, setABN] = useState<string>(session.data!.user.ABN ?? "");
     const [logoFileId, setLogoFileId] = useState<string>(session.data!.user.LogoFileId ?? "");
     const [enable2fa, setEnable2fa] = useState<boolean>(session.data!.user.Enable2fa ?? false);
+    // Clear Logo State
+    const [isClearLogoConfirmModalOpen, setIsClearLogoConfirmModalOpen] = useState<boolean>(false);
     // Confirmation
     const [confirmationModalData, setConfirmationModalData] = useState<JC_ConfirmationModalUsageModel | null>();
     const [confirmationLoading, setConfirmationLoading] = useState<boolean>(false);
@@ -223,6 +225,11 @@ export default function Page_Account() {
                                         }}
                                         s3KeyPath="User/Logos"
                                     />
+                                    {!JC_Utils.stringNullOrEmpty(logoFileId) && (
+                                        <div style={{ marginTop: "10px", display: "flex", justifyContent: "center" }}>
+                                            <JC_Button text="Clear Logo" onClick={() => setIsClearLogoConfirmModalOpen(true)} isSmall={true} />
+                                        </div>
+                                    )}
                                 </div>
                             )
                         },
@@ -289,6 +296,23 @@ export default function Page_Account() {
 
             {/* Confirmation */}
             {confirmationModalData && <JC_ModalConfirmation width={confirmationModalData.width} title={confirmationModalData.title} text={confirmationModalData.text} isOpen={confirmationModalData != null} onCancel={() => setConfirmationModalData(null)} submitButtons={confirmationModalData.submitButtons} isLoading={confirmationLoading} />}
+
+            {/* Clear Logo Confirmation Modal */}
+            <JC_ModalConfirmation
+                title="Clear Logo"
+                text="Are you sure you want to clear the logo?"
+                isOpen={isClearLogoConfirmModalOpen}
+                onCancel={() => setIsClearLogoConfirmModalOpen(false)}
+                submitButtons={[
+                    {
+                        text: "Clear Logo",
+                        onSubmit: () => {
+                            setLogoFileId("");
+                            setIsClearLogoConfirmModalOpen(false);
+                        }
+                    }
+                ]}
+            />
 
             {/* Password Change Modal */}
             <JC_Modal width="450px" title="Reset Password" isOpen={passwordModalOpen} onCancel={() => setPasswordModalOpen(false)}>
