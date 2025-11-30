@@ -483,6 +483,7 @@ export default function Template_InspectionPdf(props: Template_InspectionPdfProp
                     /* Section 2 Styles */
                     .section-2 {
                         margin-top: 30px;
+                        page-break-before: always;
                     }
 
                     /* contents-section styles moved to page break control section */
