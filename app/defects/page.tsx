@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { JC_Utils, JC_Utils_Defects } from "../Utils";
 import JC_Button from "../components/JC_Button/JC_Button";
 import JC_Form from "../components/JC_Form/JC_Form";
@@ -23,8 +25,6 @@ import { O_LocationModel } from "../models/O_Location";
 import { O_SeverityModel } from "../models/O_Severity";
 import { _ModelRequirements } from "../models/_ModelRequirements";
 import styles from "./page.module.scss";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function DefectsPage() {
     const router = useRouter();
@@ -1105,13 +1105,47 @@ export default function DefectsPage() {
                 onFinishedCallback: async () => {
                     // No longer needed - image count updates are handled by onImageUploaded callback
                 },
-                onImageUploaded: async (fileId: string, fileName: string) => {
+                onBulkImagesUploaded: async (images: { fileId: string; fileName: string; sortOrder: number }[]) => {
+                    try {
+                        // Create all DefectImage records
+                        await Promise.all(
+                            images.map(img => {
+                                const defectImage = new DefectImageModel({
+                                    DefectId: defectId,
+                                    ImageName: img.fileName,
+                                    ImageFileId: img.fileId,
+                                    SortOrder: img.sortOrder
+                                });
+                                return DefectImageModel.Create(defectImage);
+                            })
+                        );
+
+                        // Update image count once for all images
+                        setDefectsList(prevDefects =>
+                            prevDefects.map(defect => {
+                                if (defect.Id === defectId) {
+                                    const updatedDefect = Object.create(Object.getPrototypeOf(defect));
+                                    Object.assign(updatedDefect, defect, {
+                                        ImageCount: Number(defect.ImageCount || 0) + images.length
+                                    });
+                                    return updatedDefect;
+                                }
+                                return defect;
+                            })
+                        );
+                    } catch (error) {
+                        console.error("Error creating DefectImage records:", error);
+                        JC_Utils.showToastError("Failed to link images to defect");
+                    }
+                },
+                onImageUploaded: async (fileId: string, fileName: string, sortOrder: number) => {
                     try {
                         // Create DefectImage record to link the uploaded file to this defect
                         const defectImage = new DefectImageModel({
                             DefectId: defectId,
                             ImageName: fileName,
-                            ImageFileId: fileId
+                            ImageFileId: fileId,
+                            SortOrder: sortOrder
                         });
 
                         await DefectImageModel.Create(defectImage);

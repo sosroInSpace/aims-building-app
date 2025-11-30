@@ -43,7 +43,7 @@ export class DefectImageBusiness {
     }
 
     static async GetByDefectId(defectId: string) {
-        return (
+        const rows = (
             await sql<DefectImageModel>`
             SELECT "Id",
                    "DefectId",
@@ -59,6 +59,11 @@ export class DefectImageBusiness {
             ORDER BY "SortOrder" ASC
         `
         ).rows;
+
+        // Normalize sortOrders to be sequential (1, 2, 3, ...) if they aren't already
+        await this.NormalizeSortOrders(rows);
+
+        return rows;
     }
 
     static async GetByImageFileId(imageFileId: string) {
@@ -85,9 +90,12 @@ export class DefectImageBusiness {
     // - ------ - //
 
     static async Create(data: DefectImageModel) {
-        // If SortOrder is not provided or is the default value, get the next sort order
+        // Only calculate next sortOrder if not provided from frontend
+        // Default value is 999, so any value <= 0 or >= 999 means not properly set
         let sortOrder = data.SortOrder;
-        sortOrder = await this.GetNextSortOrder(data.DefectId);
+        if (!sortOrder || sortOrder <= 0 || sortOrder >= 999) {
+            sortOrder = await this.GetNextSortOrder(data.DefectId);
+        }
 
         await sql`
             INSERT INTO public."DefectImage"
@@ -170,5 +178,35 @@ export class DefectImageBusiness {
         }
 
         return latestSortOrder + 1;
+    }
+
+    // Normalize sortOrders to be sequential (1, 2, 3, ...) if they aren't already
+    static async NormalizeSortOrders(rows: DefectImageModel[]) {
+        if (rows.length === 0) return;
+
+        // Check if sortOrders are already sequential starting from 1
+        let needsNormalization = false;
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i].SortOrder !== i + 1) {
+                needsNormalization = true;
+                break;
+            }
+        }
+
+        if (!needsNormalization) return;
+
+        // Update each row with sequential sortOrder and update in DB
+        for (let i = 0; i < rows.length; i++) {
+            const newSortOrder = i + 1;
+            if (rows[i].SortOrder !== newSortOrder) {
+                rows[i].SortOrder = newSortOrder;
+                await sql`
+                    UPDATE public."DefectImage"
+                    SET "SortOrder" = ${newSortOrder},
+                        "ModifiedAt" = ${new Date().toUTCString()}
+                    WHERE "Id" = ${rows[i].Id}
+                `;
+            }
+        }
     }
 }

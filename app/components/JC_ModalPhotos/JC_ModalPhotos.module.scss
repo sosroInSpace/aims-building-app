@@ -104,6 +104,33 @@ $topBottomPadding: 26px;
                     .savingText {
                         @include loadingText;
                     }
+
+                    .progressBar {
+                        width: 80%;
+                        max-width: 300px;
+                        height: 20px;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        background-color: rgba(255, 255, 255, 0.2);
+                        appearance: none;
+                        -webkit-appearance: none;
+
+                        &::-webkit-progress-bar {
+                            background-color: rgba(255, 255, 255, 0.2);
+                            border-radius: 10px;
+                        }
+
+                        &::-webkit-progress-value {
+                            background-color: $primaryColor;
+                            border-radius: 10px;
+                            transition: width 0.3s ease;
+                        }
+
+                        &::-moz-progress-bar {
+                            background-color: $primaryColor;
+                            border-radius: 10px;
+                        }
+                    }
                 }
 
                 .imageActions {

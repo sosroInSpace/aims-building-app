@@ -1,5 +1,13 @@
 "use client";
 
+import { JC_Utils, JC_Utils_Dates } from "@/app/Utils";
+import { JC_Delete } from "@/app/apiServices/JC_Delete";
+import { JC_Post } from "@/app/apiServices/JC_Post";
+import { CustomerModel } from "@/app/models/Customer";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { LeadingActions, SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from "react-swipeable-list";
+import "react-swipeable-list/dist/styles.css";
 import { FieldTypeEnum } from "../../enums/FieldType";
 import { JC_FieldModel } from "../../models/ComponentModels/JC_Field";
 import { _ModelRequirements } from "../../models/_ModelRequirements";
@@ -13,14 +21,6 @@ import JC_ModalConfirmation from "../JC_ModalConfirmation/JC_ModalConfirmation";
 import JC_ModalPhotos, { JC_ModalPhotosModel } from "../JC_ModalPhotos/JC_ModalPhotos";
 import JC_PhotoUpload from "../JC_PhotoUpload/JC_PhotoUpload";
 import styles from "./JC_FormTablet.module.scss";
-import { JC_Utils, JC_Utils_Dates } from "@/app/Utils";
-import { JC_Delete } from "@/app/apiServices/JC_Delete";
-import { JC_Post } from "@/app/apiServices/JC_Post";
-import { CustomerModel } from "@/app/models/Customer";
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LeadingActions, SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from "react-swipeable-list";
-import "react-swipeable-list/dist/styles.css";
 
 export interface JC_FormListModel<T> {
     headers: JC_ListHeader[];
@@ -69,7 +69,8 @@ export interface JC_FormTabletModel {
         onFinishedCallback: () => Promise<void>;
         onSortOrderChanged?: (files: JC_ModalPhotosModel[]) => Promise<void>;
         onImageDeleted?: (fileId: string) => Promise<void>;
-        onImageUploaded?: (fileId: string, fileName: string) => Promise<void>;
+        onImageUploaded?: (fileId: string, fileName: string, sortOrder: number) => Promise<void>;
+        onBulkImagesUploaded?: (images: { fileId: string; fileName: string; sortOrder: number }[]) => Promise<void>;
         s3KeyPath?: string;
     };
     customerId?: string;
@@ -130,7 +131,8 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
     const [photoModalOnFinishedCallback, setPhotoModalOnFinishedCallback] = useState<(() => Promise<void>) | null>(null);
     const [photoModalOnSortOrderChanged, setPhotoModalOnSortOrderChanged] = useState<((files: JC_ModalPhotosModel[]) => Promise<void>) | null>(null);
     const [photoModalOnImageDeleted, setPhotoModalOnImageDeleted] = useState<((fileId: string) => Promise<void>) | null>(null);
-    const [photoModalOnImageUploaded, setPhotoModalOnImageUploaded] = useState<((fileId: string, fileName: string) => Promise<void>) | null>(null);
+    const [photoModalOnImageUploaded, setPhotoModalOnImageUploaded] = useState<((fileId: string, fileName: string, sortOrder: number) => Promise<void>) | null>(null);
+    const [photoModalOnBulkImagesUploaded, setPhotoModalOnBulkImagesUploaded] = useState<((images: { fileId: string; fileName: string; sortOrder: number }[]) => Promise<void>) | null>(null);
 
     // Option Edit Modal state
     const [optionEditModalOpen, setOptionEditModalOpen] = useState<boolean>(false);
@@ -1702,6 +1704,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
                                                                                                     setPhotoModalOnSortOrderChanged(photoData.onSortOrderChanged ? () => photoData.onSortOrderChanged! : null);
                                                                                                     setPhotoModalOnImageDeleted(photoData.onImageDeleted ? () => photoData.onImageDeleted! : null);
                                                                                                     setPhotoModalOnImageUploaded(photoData.onImageUploaded ? () => photoData.onImageUploaded! : null);
+                                                                                                    setPhotoModalOnBulkImagesUploaded(photoData.onBulkImagesUploaded ? () => photoData.onBulkImagesUploaded! : null);
                                                                                                     setPhotoModalS3KeyPath(photoData.s3KeyPath || "");
                                                                                                     setIsPhotoModalOpen(true);
                                                                                                 }
@@ -2519,7 +2522,7 @@ export default function JC_FormTablet({ model }: JC_FormTabletProps) {
             </JC_Modal>
 
             {/* Photo Modal */}
-            <JC_ModalPhotos isOpen={isPhotoModalOpen} onCancel={() => setIsPhotoModalOpen(false)} title={photoModalTitle} files={photoModalFiles} getFilesCallback={photoModalGetFilesCallback || (() => Promise.resolve([]))} onFinishedCallback={photoModalOnFinishedCallback || (() => Promise.resolve())} onSortOrderChanged={photoModalOnSortOrderChanged || undefined} onImageDeleted={photoModalOnImageDeleted || undefined} onImageUploaded={photoModalOnImageUploaded || undefined} s3KeyPath={photoModalS3KeyPath} />
+            <JC_ModalPhotos isOpen={isPhotoModalOpen} onCancel={() => setIsPhotoModalOpen(false)} title={photoModalTitle} files={photoModalFiles} getFilesCallback={photoModalGetFilesCallback || (() => Promise.resolve([]))} onFinishedCallback={photoModalOnFinishedCallback || (() => Promise.resolve())} onSortOrderChanged={photoModalOnSortOrderChanged || undefined} onImageDeleted={photoModalOnImageDeleted || undefined} onImageUploaded={photoModalOnImageUploaded || undefined} onBulkImagesUploaded={photoModalOnBulkImagesUploaded || undefined} s3KeyPath={photoModalS3KeyPath} />
 
             {/* Option Edit Modal */}
             <JC_Modal isOpen={optionEditModalOpen} onCancel={handleOptionEditModalCancel} title="Edit Option">

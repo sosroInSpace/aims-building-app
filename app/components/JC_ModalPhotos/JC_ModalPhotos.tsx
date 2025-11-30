@@ -1,17 +1,25 @@
 "use client";
 
+import { JC_Utils, JC_Utils_Files } from "@/app/Utils";
+import { JC_PostRaw } from "@/app/apiServices/JC_PostRaw";
+import { MimeType } from "@/app/enums/MimeType";
+import { FileModel } from "@/app/models/File";
+import Image from "next/image";
+import pLimit from "p-limit";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import JC_Button from "../JC_Button/JC_Button";
 import JC_ImageAnnotator, { Annotation } from "../JC_ImageAnnotator/JC_ImageAnnotator";
 import JC_ModalConfirmation from "../JC_ModalConfirmation/JC_ModalConfirmation";
 import JC_Spinner from "../JC_Spinner/JC_Spinner";
 import JC_Title from "../JC_Title/JC_Title";
 import styles from "./JC_ModalPhotos.module.scss";
-import { JC_Utils, JC_Utils_Files } from "@/app/Utils";
-import { JC_PostRaw } from "@/app/apiServices/JC_PostRaw";
-import { MimeType } from "@/app/enums/MimeType";
-import { FileModel } from "@/app/models/File";
-import Image from "next/image";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+
+// Interface for presigned URL response
+interface PresignedUrlResponse {
+    filename: string;
+    uploadUrl: string;
+    key: string;
+}
 
 export interface JC_ModalPhotosModel {
     FileId: string;
@@ -25,7 +33,8 @@ export default function JC_ModalPhotos(
         title: string;
         files: JC_ModalPhotosModel[];
         // New interface props
-        onImageUploaded?: (fileId: string, fileName: string) => void;
+        onImageUploaded?: (fileId: string, fileName: string, sortOrder: number, isBulkUpload?: boolean) => void | Promise<void>;
+        onBulkImagesUploaded?: (images: { fileId: string; fileName: string; sortOrder: number }[]) => void | Promise<void>;
         onImageDeleted?: (fileId: string) => Promise<void>;
         onSortOrderChanged?: (files: JC_ModalPhotosModel[]) => void;
         onImagesUploaded?: () => Promise<JC_ModalPhotosModel[]>; // Callback after all selected images are uploaded, returns updated files
@@ -44,8 +53,10 @@ export default function JC_ModalPhotos(
     const [isEditingImage, setIsEditingImage] = useState<boolean>(false);
     const [isSavingAnnotation, setIsSavingAnnotation] = useState<boolean>(false);
     const [pendingReselectionFileId, setPendingReselectionFileId] = useState<string | null>(null);
-    const [shouldSelectLastImage, setShouldSelectLastImage] = useState<boolean>(false); // Flag to auto-select last image after upload
     const [loadedFiles, setLoadedFiles] = useState<JC_ModalPhotosModel[]>([]); // Track the actual loaded files data
+
+    // Bulk upload progress state
+    const [bulkUploadProgress, setBulkUploadProgress] = useState<{ total: number; current: number } | null>(null);
 
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState<boolean>(false);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -55,6 +66,21 @@ export default function JC_ModalPhotos(
     const selectedImageRef = useRef<HTMLImageElement>(null);
 
     // - FUNCTIONS - //
+    // Helper to select the last image in the list after 0.3 seconds
+    const selectLastImageAfterDelay = () => {
+        setTimeout(() => {
+            setImages(currentImages => {
+                if (currentImages.length > 0) {
+                    setSelectedImage(currentImages[currentImages.length - 1]);
+                    if (imagesListRef.current) {
+                        imagesListRef.current.scrollTop = imagesListRef.current.scrollHeight;
+                    }
+                }
+                return currentImages;
+            });
+        }, 600);
+    };
+
     const loadImages = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -65,7 +91,7 @@ export default function JC_ModalPhotos(
                     filesToLoad = await _.getFilesCallback();
                 } catch (error) {
                     console.error("Error loading files from getFilesCallback:", error);
-                    filesToLoad = _.files; // Fallback to provided files
+                    filesToLoad = _.files;
                 }
             }
 
@@ -76,13 +102,27 @@ export default function JC_ModalPhotos(
                 return;
             }
 
-            // Store the loaded files data for use in move functions
-            setLoadedFiles(filesToLoad);
+            // Sort files by current SortOrder first
+            const sortedFiles = [...filesToLoad].sort((a, b) => a.SortOrder - b.SortOrder);
 
-            // Extract fileIds from the files array
-            const fileIds = filesToLoad.map(f => f.FileId);
+            // Normalize sortOrders on frontend - make them sequential (1, 2, 3, ...)
+            let needsNormalization = false;
+            const normalizedFiles: JC_ModalPhotosModel[] = sortedFiles.map((file, index) => {
+                const expectedSortOrder = index + 1;
+                if (file.SortOrder !== expectedSortOrder) {
+                    needsNormalization = true;
+                    return { ...file, SortOrder: expectedSortOrder };
+                }
+                return { ...file };
+            });
 
-            // Use the new FileModel.GetListByIdsList method which includes signed URLs
+            // If sortOrders were normalized, send the full list to backend to update
+            if (needsNormalization && _.onSortOrderChanged) {
+                _.onSortOrderChanged(normalizedFiles);
+            }
+
+            setLoadedFiles(normalizedFiles);
+            const fileIds = normalizedFiles.map(f => f.FileId);
             const filesResponse = await FileModel.GetListByIdsList(fileIds);
             const loadedImages =
                 filesResponse?.ResultList?.map((file: FileModel) => ({
@@ -92,78 +132,43 @@ export default function JC_ModalPhotos(
                     fileModel: file
                 })) || [];
 
-            // Sort images by SortOrder from the files array (which already has the correct sort orders)
             const sortedImages = loadedImages.sort((a, b) => {
-                const aFile = filesToLoad.find(f => f.FileId === a.fileId);
-                const bFile = filesToLoad.find(f => f.FileId === b.fileId);
+                const aFile = normalizedFiles.find(f => f.FileId === a.fileId);
+                const bFile = normalizedFiles.find(f => f.FileId === b.fileId);
                 return (aFile?.SortOrder || 0) - (bFile?.SortOrder || 0);
             });
 
             setImages(sortedImages);
 
-            // Handle image selection after loading
             if (sortedImages.length > 0) {
-                // If there's a pending re-selection, try to select that image
                 if (pendingReselectionFileId) {
                     const imageToReselect = sortedImages.find(img => img.fileId === pendingReselectionFileId);
                     if (imageToReselect) {
                         setSelectedImage(imageToReselect);
-
-                        // Scroll to the re-selected image with 0.3 second delay
                         setTimeout(() => {
                             if (imagesListRef.current) {
-                                const selectedImageIndex = sortedImages.findIndex(img => img.fileId === pendingReselectionFileId);
-                                if (selectedImageIndex >= 0) {
-                                    // Calculate the scroll position for the selected image
-                                    // Each image item has a fixed height, we need to scroll to show the selected image
-                                    const imageElements = imagesListRef.current.querySelectorAll(".imageListItem");
-                                    if (imageElements[selectedImageIndex]) {
-                                        const selectedElement = imageElements[selectedImageIndex] as HTMLElement;
-
-                                        // Calculate scroll position to center the selected image in view
-                                        const scrollTop = selectedElement.offsetTop - imagesListRef.current.clientHeight / 2 + selectedElement.clientHeight / 2;
-                                        imagesListRef.current.scrollTop = Math.max(0, scrollTop);
-                                    }
+                                const idx = sortedImages.findIndex(img => img.fileId === pendingReselectionFileId);
+                                const elements = imagesListRef.current.querySelectorAll(".imageListItem");
+                                if (elements[idx]) {
+                                    const el = elements[idx] as HTMLElement;
+                                    imagesListRef.current.scrollTop = Math.max(0, el.offsetTop - imagesListRef.current.clientHeight / 2 + el.clientHeight / 2);
                                 }
                             }
-                            setPendingReselectionFileId(null); // Clear the pending re-selection after scrolling
-                        }, 300); // 0.3 second delay as requested
+                            setPendingReselectionFileId(null);
+                        }, 300);
                     } else {
-                        // Fallback to first image if the pending image is not found
                         setSelectedImage(sortedImages[0]);
                         setPendingReselectionFileId(null);
                     }
-                } else if (shouldSelectLastImage) {
-                    // Auto-select the last image after upload with 300ms delay
-                    setTimeout(() => {
-                        if (filesToLoad.length > 0) {
-                            // Find the image with the highest SortOrder from filesToLoad
-                            const sortedLoadedFiles = [...filesToLoad].sort((a, b) => (b.SortOrder || 0) - (a.SortOrder || 0));
-                            const lastFileId = sortedLoadedFiles[0]?.FileId;
-
-                            if (lastFileId) {
-                                const lastImage = sortedImages.find(img => img.fileId === lastFileId);
-                                if (lastImage) {
-                                    setSelectedImage(lastImage);
-                                }
-                            }
-                        }
-                        setShouldSelectLastImage(false); // Clear the flag
-                    }, 300);
                 } else {
-                    // Auto-select the first image when images are loaded (normal case)
                     setSelectedImage(sortedImages[0]);
-
-                    // Scroll to top of images list to show the selected image
                     setTimeout(() => {
-                        if (imagesListRef.current) {
-                            imagesListRef.current.scrollTop = 0;
-                        }
-                    }, 100); // Small delay to ensure DOM is updated
+                        if (imagesListRef.current) imagesListRef.current.scrollTop = 0;
+                    }, 100);
                 }
             } else {
                 setSelectedImage(null);
-                setPendingReselectionFileId(null); // Clear any pending re-selection
+                setPendingReselectionFileId(null);
             }
         } catch (error) {
             console.error("Error loading images:", error);
@@ -171,7 +176,7 @@ export default function JC_ModalPhotos(
         } finally {
             setIsLoading(false);
         }
-    }, [_, pendingReselectionFileId, shouldSelectLastImage]);
+    }, [_, pendingReselectionFileId]);
 
     // Handle delete image
     const handleDeleteImage = () => {
@@ -235,7 +240,6 @@ export default function JC_ModalPhotos(
             setIsLoading(false);
             setIsCapturingPhoto(false);
             setIsSaving(false);
-            setShouldSelectLastImage(false);
 
             setDeleteConfirmationOpen(false);
             setIsDeleting(false);
@@ -294,30 +298,26 @@ export default function JC_ModalPhotos(
     const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files && files.length > 0) {
-            setIsCapturingPhoto(true);
-            try {
-                // Process each selected file
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
+            const fileArray = Array.from(files);
 
-                    // Add a small delay between uploads to ensure different timestamps
-                    if (i > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
-                    }
-
-                    // Convert file to base64
+            // Use bulk upload for multiple files (2 or more)
+            if (fileArray.length >= 2) {
+                await handleBulkUpload(fileArray);
+            } else {
+                // Single file - use original flow
+                setIsCapturingPhoto(true);
+                try {
+                    const file = fileArray[0];
                     const reader = new FileReader();
                     await new Promise<void>((resolve, reject) => {
                         reader.onload = async e => {
                             const base64 = e.target?.result as string;
                             if (base64) {
                                 try {
-                                    // Resize image to 800x600 before saving
                                     const resizedBase64 = await JC_Utils_Files.resizeBase64Image(base64, 800, 600);
                                     await savePhotoToAws(resizedBase64);
                                 } catch (resizeError) {
                                     console.error("Error resizing image:", resizeError);
-                                    // If resize fails, save original image
                                     await savePhotoToAws(base64);
                                 }
                             }
@@ -329,16 +329,113 @@ export default function JC_ModalPhotos(
                         };
                         reader.readAsDataURL(file);
                     });
+                } catch (error) {
+                    console.error("Error processing gallery image:", error);
+                    JC_Utils.showToastError("Failed to process gallery image");
+                } finally {
+                    setIsCapturingPhoto(false);
                 }
-            } catch (error) {
-                console.error("Error processing gallery images:", error);
-                JC_Utils.showToastError("Failed to process some gallery images");
-            } finally {
-                setIsCapturingPhoto(false);
             }
         }
         // Reset the input value so the same files can be selected again
         event.target.value = "";
+    };
+
+    // Bulk upload using presigned URLs with controlled concurrency
+    const handleBulkUpload = async (files: File[]) => {
+        setIsCapturingPhoto(true);
+        setBulkUploadProgress({ total: files.length, current: 0 });
+
+        try {
+            // Get presigned URLs for all files
+            const { presignedUrls } = await JC_PostRaw<{ files: { filename: string; contentType: string }[]; s3KeyPath?: string }, { presignedUrls: PresignedUrlResponse[] }>("aws/getBulkPresignedUrls", {
+                files: files.map((_, i) => ({ filename: `image-${i}`, contentType: "image/webp" })),
+                s3KeyPath: _.s3KeyPath
+            });
+
+            // Read and resize all files to base64
+            const resizedImages = await Promise.all(
+                files.map(
+                    file =>
+                        new Promise<string>(resolve => {
+                            const reader = new FileReader();
+                            reader.onload = async e => {
+                                const base64 = e.target?.result as string;
+                                resolve(base64 ? await JC_Utils_Files.resizeBase64Image(base64, 800, 600).catch(() => base64) : "");
+                            };
+                            reader.onerror = () => resolve("");
+                            reader.readAsDataURL(file);
+                        })
+                )
+            );
+
+            // Upload to S3 with 5 concurrent uploads
+            // Pre-allocate array to preserve original file selection order
+            const limit = pLimit(5);
+            const uploadResults: ({ fileName: string; key: string; sizeBytes: number; originalIndex: number } | null)[] = new Array(resizedImages.length).fill(null);
+
+            await Promise.all(
+                resizedImages.map((base64, i) =>
+                    limit(async () => {
+                        if (!base64) return;
+                        const presigned = presignedUrls[i];
+                        try {
+                            await JC_Utils_Files.uploadFileWithSignedUrl(presigned.uploadUrl, base64, "image/webp");
+                            // Store at the original index to preserve file selection order
+                            uploadResults[i] = { fileName: presigned.filename, key: presigned.key, sizeBytes: JC_Utils_Files.calculateBase64FileSize(base64), originalIndex: i };
+                            setBulkUploadProgress(prev => (prev ? { ...prev, current: prev.current + 1 } : null));
+                        } catch (error) {
+                            console.error(`Failed to upload ${presigned.filename}:`, error);
+                        }
+                    })
+                )
+            );
+
+            // Filter out failed uploads and sort by original index to ensure correct order
+            const orderedUploadResults = uploadResults
+                .filter((r): r is { fileName: string; key: string; sizeBytes: number; originalIndex: number } => r !== null)
+                .sort((a, b) => a.originalIndex - b.originalIndex)
+                .map(({ fileName, key, sizeBytes }) => ({ fileName, key, sizeBytes }));
+
+            // Create File records server-side and notify parent
+            // Using orderedUploadResults ensures files are created in the exact order user selected them
+            if (orderedUploadResults.length > 0) {
+                const res = await fetch("/api/aws/getBulkPresignedUrls", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploads: orderedUploadResults }) });
+                const { fileIds } = (await res.json()) as { fileIds: { id: string; fileName: string }[] };
+
+                // Calculate starting sortOrder based on current highest sortOrder
+                const maxSortOrder = loadedFiles.length > 0 ? Math.max(...loadedFiles.map(f => f.SortOrder)) : 0;
+
+                // Use bulk callback if available (preferred), otherwise fall back to individual calls
+                // sortOrder is set based on the order files were selected by the user
+                if (_.onBulkImagesUploaded) {
+                    const bulkImages = fileIds.map((f, i) => ({
+                        fileId: f.id,
+                        fileName: f.fileName,
+                        sortOrder: maxSortOrder + i + 1
+                    }));
+                    await _.onBulkImagesUploaded(bulkImages);
+                } else {
+                    // Fall back to individual calls for backward compatibility
+                    for (let i = 0; i < fileIds.length; i++) {
+                        const f = fileIds[i];
+                        const sortOrder = maxSortOrder + i + 1;
+                        _.onImageUploaded?.(f.id, f.fileName, sortOrder, true);
+                    }
+                }
+                await _.onImagesUploaded?.();
+                await _.onFinishedCallback?.();
+                await loadImages();
+                selectLastImageAfterDelay();
+                JC_Utils.showToastSuccess(`Uploaded ${orderedUploadResults.length} images`);
+            }
+        } catch (error) {
+            console.error("Bulk upload error:", error);
+            JC_Utils.showToastError("Failed to upload images");
+        } finally {
+            setIsCapturingPhoto(false);
+            setBulkUploadProgress(null);
+        }
     };
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,18 +498,15 @@ export default function JC_ModalPhotos(
             });
 
             if (result.success) {
-                // Set flag to auto-select last image after all operations complete
-                setShouldSelectLastImage(true);
-
-                // Handle new interface
+                // Handle new interface - calculate next sortOrder for single upload
                 if (_.onImageUploaded) {
-                    await _.onImageUploaded(result.fileId, fileName);
+                    const maxSortOrder = loadedFiles.length > 0 ? Math.max(...loadedFiles.map(f => f.SortOrder)) : 0;
+                    _.onImageUploaded(result.fileId, fileName, maxSortOrder + 1);
                 }
 
                 // Notify parent that images have been uploaded and get updated files
                 if (_.onImagesUploaded) {
                     await _.onImagesUploaded();
-                    // The parent will handle updating the files prop, which will trigger loadImages via useEffect
                 }
 
                 // Handle legacy interface
@@ -420,9 +514,9 @@ export default function JC_ModalPhotos(
                     await _.onFinishedCallback();
                 }
 
-                // Reload images to include the newly uploaded image
-                // The loadImages function will handle auto-selecting the last image due to shouldSelectLastImage flag
+                // Reload images and select the last (newly uploaded) image
                 await loadImages();
+                selectLastImageAfterDelay();
             }
         } catch (error) {
             console.error("Error saving photo:", error);
@@ -475,7 +569,8 @@ export default function JC_ModalPhotos(
                 if (createNew) {
                     // Notify parent component that a new image was created
                     if (_.onImageUploaded) {
-                        _.onImageUploaded(result.fileId, result.fileName);
+                        const maxSortOrder = loadedFiles.length > 0 ? Math.max(...loadedFiles.map(f => f.SortOrder)) : 0;
+                        _.onImageUploaded(result.fileId, result.fileName, maxSortOrder + 1);
                     }
                     JC_Utils.showToastSuccess("New annotated image created successfully");
 
@@ -531,7 +626,6 @@ export default function JC_ModalPhotos(
 
     // Handle move image up
     const handleMoveImageUp = () => {
-        console.log("handleMoveImageUp called", { selectedImage, imagesLength: images.length, loadedFilesLength: loadedFiles.length });
         if (!selectedImage || images.length <= 1) return;
 
         const currentIndex = images.findIndex(img => img.fileId === selectedImage.fileId);
@@ -544,14 +638,18 @@ export default function JC_ModalPhotos(
         // Create a copy of the loaded files array
         const updatedFiles = [...loadedFiles];
 
-        // Get the two affected files before swapping
-        const currentFile = updatedFiles[currentFileIndex];
-        const previousFile = updatedFiles[currentFileIndex - 1];
+        // Deep copy the affected files to avoid mutating state directly
+        const currentFile = { ...updatedFiles[currentFileIndex] };
+        const previousFile = { ...updatedFiles[currentFileIndex - 1] };
 
         // Swap sort orders with the previous file
         const tempSortOrder = currentFile.SortOrder;
         currentFile.SortOrder = previousFile.SortOrder;
         previousFile.SortOrder = tempSortOrder;
+
+        // Update the array with the new objects
+        updatedFiles[currentFileIndex] = currentFile;
+        updatedFiles[currentFileIndex - 1] = previousFile;
 
         // Sort the array by SortOrder to maintain proper order
         updatedFiles.sort((a, b) => a.SortOrder - b.SortOrder);
@@ -576,7 +674,6 @@ export default function JC_ModalPhotos(
 
     // Handle move image down
     const handleMoveImageDown = () => {
-        console.log("handleMoveImageDown called", { selectedImage, imagesLength: images.length, loadedFilesLength: loadedFiles.length });
         if (!selectedImage || images.length <= 1) return;
 
         const currentIndex = images.findIndex(img => img.fileId === selectedImage.fileId);
@@ -589,14 +686,18 @@ export default function JC_ModalPhotos(
         // Create a copy of the loaded files array
         const updatedFiles = [...loadedFiles];
 
-        // Get the two affected files before swapping
-        const currentFile = updatedFiles[currentFileIndex];
-        const nextFile = updatedFiles[currentFileIndex + 1];
+        // Deep copy the affected files to avoid mutating state directly
+        const currentFile = { ...updatedFiles[currentFileIndex] };
+        const nextFile = { ...updatedFiles[currentFileIndex + 1] };
 
         // Swap sort orders with the next file
         const tempSortOrder = currentFile.SortOrder;
         currentFile.SortOrder = nextFile.SortOrder;
         nextFile.SortOrder = tempSortOrder;
+
+        // Update the array with the new objects
+        updatedFiles[currentFileIndex] = currentFile;
+        updatedFiles[currentFileIndex + 1] = nextFile;
 
         // Sort the array by SortOrder to maintain proper order
         updatedFiles.sort((a, b) => a.SortOrder - b.SortOrder);
@@ -636,6 +737,14 @@ export default function JC_ModalPhotos(
                         <div className={`${styles.selectedImagePane} selectedImagePane`}>
                             {isLoading ? (
                                 <JC_Spinner />
+                            ) : bulkUploadProgress ? (
+                                <div className={styles.savingContainer}>
+                                    <JC_Spinner />
+                                    <div className={styles.savingText}>
+                                        Uploading {bulkUploadProgress.current} of {bulkUploadProgress.total} images...
+                                    </div>
+                                    <progress value={bulkUploadProgress.current} max={bulkUploadProgress.total} className={styles.progressBar} />
+                                </div>
                             ) : isSaving || isSavingAnnotation ? (
                                 <div className={styles.savingContainer}>
                                     <JC_Spinner />
@@ -695,11 +804,11 @@ export default function JC_ModalPhotos(
                 {/* Footer */}
                 <div className={styles.footer}>
                     <div className={styles.footerLeft}>
-                        <div className={styles.galleryIconContainer} onClick={handleGallery} style={{ opacity: isCapturingPhoto ? 0.6 : 1, pointerEvents: isCapturingPhoto ? "none" : "auto" }}>
+                        <div className={styles.galleryIconContainer} onClick={handleGallery} style={{ opacity: isLoading || isCapturingPhoto || isSaving ? 0.6 : 1, pointerEvents: isLoading || isCapturingPhoto || isSaving ? "none" : "auto" }}>
                             <div className={styles.galleryIcon}>🖼️</div>
                             <span className={styles.galleryText}>Gallery</span>
                         </div>
-                        <div className={styles.cameraIconContainer} onClick={handleTakePhoto} style={{ opacity: isCapturingPhoto ? 0.6 : 1, pointerEvents: isCapturingPhoto ? "none" : "auto" }}>
+                        <div className={styles.cameraIconContainer} onClick={handleTakePhoto} style={{ opacity: isLoading || isCapturingPhoto || isSaving ? 0.6 : 1, pointerEvents: isLoading || isCapturingPhoto || isSaving ? "none" : "auto" }}>
                             <div className={styles.cameraIcon}>📷</div>
                             <span className={styles.cameraText}>{isCapturingPhoto ? "Processing Photo..." : "Take Photo"}</span>
                         </div>
