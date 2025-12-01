@@ -1,7 +1,7 @@
 // Page configuration utility
 
 // List of paths that should have header and footer hidden
-export const pagesWithHiddenHeaderFooter = ["/admin/products", "/admin/ingredients", "/admin/printSettings", "/admin/printFrontLabel", "/admin/printBackLabel", "/demo/menu", "/demo/products", "/demo/ingredients", "/demo/printSettings", "/demo/printFrontLabel", "/demo/printBackLabel", "/login", "/register"];
+export const pagesWithHiddenHeaderFooter = ["/admin/products", "/admin/ingredients", "/admin/printSettings", "/admin/printFrontLabel", "/admin/printBackLabel", "/demo/menu", "/demo/products", "/demo/ingredients", "/demo/printSettings", "/demo/printFrontLabel", "/demo/printBackLabel", "/login", "/register", "/resetPassword", "/forgotPassword"];
 
 /**
  * Check if the current path should have header and footer hidden

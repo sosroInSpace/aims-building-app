@@ -1,8 +1,9 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { JC_Utils, JC_Utils_Dates, JC_Utils_Validation } from "../Utils";
 import { JC_Get } from "../apiServices/JC_Get";
-import { JC_Post } from "../apiServices/JC_Post";
 import { JC_PostRaw } from "../apiServices/JC_PostRaw";
 import JC_Button from "../components/JC_Button/JC_Button";
 import JC_Form from "../components/JC_Form/JC_Form";
@@ -11,8 +12,6 @@ import JC_Title from "../components/JC_Title/JC_Title";
 import { FieldTypeEnum } from "../enums/FieldType";
 import { UserModel } from "../models/User";
 import styles from "./page.module.scss";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function Page_ResetPassword() {
     const params = useSearchParams();
@@ -104,6 +103,7 @@ export default function Page_ResetPassword() {
                     }
                 ]}
             />
+            <JC_Button text="Back to Login" linkToPage="login" overrideClass={styles.backToLoginButton} />
         </div>
     );
 }
