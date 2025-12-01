@@ -56,7 +56,6 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
 
     // Password change modal state
     const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
-    const [currentPassword, setCurrentPassword] = useState<string>("");
     const [newPassword, setNewPassword] = useState<string>("");
     const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
     const [passwordChangeLoading, setPasswordChangeLoading] = useState<boolean>(false);
@@ -281,7 +280,6 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
     // Reset Password - Open Modal
     const resetPassword = useCallback(() => {
         setPasswordModalOpen(true);
-        setCurrentPassword("");
         setNewPassword("");
         setConfirmNewPassword("");
         setPasswordChangeError("");
@@ -297,9 +295,8 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
         setPasswordChangeError("");
 
         try {
-            await JC_PostRaw("user/changePassword", {
+            await JC_PostRaw("user/resetPassword", {
                 userId: selectedUser.Id,
-                currentPassword: currentPassword,
                 newPassword: newPassword
             });
 
@@ -307,7 +304,6 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
             JC_Utils.showToastSuccess("Password changed successfully!");
 
             // Reset form
-            setCurrentPassword("");
             setNewPassword("");
             setConfirmNewPassword("");
             setSubmitClicked(false);
@@ -316,7 +312,7 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
         }
 
         setPasswordChangeLoading(false);
-    }, [selectedUser, currentPassword, newPassword]);
+    }, [selectedUser, newPassword]);
 
     // Create the form tablet model
     const formTabletModel: JC_FormTabletModel = {
@@ -518,22 +514,13 @@ export default function UsersTab({ reportTypeOptions }: UsersTabProps) {
             />
 
             {/* Password Change Modal */}
-            <JC_Modal width="450px" title="Change Password" isOpen={passwordModalOpen} onCancel={() => setPasswordModalOpen(false)}>
+            <JC_Modal width="450px" title="Reset Password" isOpen={passwordModalOpen} onCancel={() => setPasswordModalOpen(false)}>
                 <JC_Form
-                    submitButtonText="Change Password"
+                    submitButtonText="Reset Password"
                     onSubmit={changePassword}
                     isLoading={passwordChangeLoading}
                     errorMessage={passwordChangeError}
                     fields={[
-                        // Current Password
-                        {
-                            inputId: "current-password-input",
-                            type: FieldTypeEnum.Password,
-                            label: "Current Password",
-                            onChange: newValue => setCurrentPassword(newValue),
-                            value: currentPassword,
-                            validate: (v: any) => (JC_Utils.stringNullOrEmpty(v) ? "Enter your current password." : "")
-                        },
                         // New Password
                         {
                             inputId: "new-password-input",
