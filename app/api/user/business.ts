@@ -279,7 +279,9 @@ export class UserBusiness {
     static async UpdatePassword(userId: string, newHash: string) {
         await sql`
             UPDATE public."User"
-            SET "PasswordHash" = ${newHash}
+            SET "PasswordHash" = ${newHash},
+                "ChangePasswordToken" = NULL,
+                "ChangePasswordTokenDate" = NULL
             WHERE "Id" = ${userId}
         `;
     }
