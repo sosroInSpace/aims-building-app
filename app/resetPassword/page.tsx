@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { JC_Utils, JC_Utils_Dates, JC_Utils_Validation } from "../Utils";
@@ -15,6 +16,7 @@ import styles from "./page.module.scss";
 
 export default function Page_ResetPassword() {
     const params = useSearchParams();
+    const session = useSession();
     let userToken = params.get("token");
 
     // - STATE - //
@@ -57,13 +59,19 @@ export default function Page_ResetPassword() {
         await JC_PostRaw<{ userId: string | undefined; newPassword: string }, { error?: string; success?: boolean }>("user/resetPassword", {
             userId: userId,
             newPassword: newPassword
-        }).then(result => {
+        }).then(async result => {
             if (result.error) {
                 setErrorMessage(result.error);
+                setIsLoading(false);
             } else {
+                // If user is logged in, log them out first
+                if (session.status === "authenticated") {
+                    JC_Utils.clearAllLocalStorage();
+                    await signOut({ redirect: false });
+                }
                 setSuccess(true);
+                setIsLoading(false);
             }
-            setIsLoading(false);
         });
     }
 
@@ -72,11 +80,14 @@ export default function Page_ResetPassword() {
     return tokenValid == undefined ? (
         <JC_Spinner isPageBody />
     ) : !tokenValid ? (
-        <div className={styles.tokenInvalid}>Token Invalid</div>
+        <div className={styles.tokenInvalid}>
+            <div>Token Invalid</div>
+            <JC_Button text="Back to Login" linkToPage="login" overrideClass={styles.backToLoginButton} />
+        </div>
     ) : success ? (
         <div className={styles.successContainer}>
             <div>Your new password has been set!</div>
-            <JC_Button text="Go back home" linkToPage="/" />
+            <JC_Button text="Back to Login" linkToPage="login" overrideClass={styles.backToLoginButton} />
         </div>
     ) : (
         <div className={styles.mainContainer}>
