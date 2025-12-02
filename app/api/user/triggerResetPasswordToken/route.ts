@@ -1,14 +1,14 @@
+import crypto from "crypto";
+import { NextRequest, NextResponse } from "next/server";
 import { EmailBusiness_AWS, EmailBusiness_Resend } from "../../email/business";
 import { UserBusiness } from "../business";
-import bcrypt from "bcryptjs";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
         const { email } = await request.json();
         const normalizedEmail = email.toLowerCase();
-        // Set token
-        let newResetPasswordToken = await bcrypt.hash(normalizedEmail, 12);
+        // Generate alphanumeric token (64 characters)
+        let newResetPasswordToken = crypto.randomBytes(32).toString("hex");
         await UserBusiness.SetResetPasswordToken(normalizedEmail, newResetPasswordToken);
 
         // Send email using the appropriate service

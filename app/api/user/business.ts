@@ -1,6 +1,6 @@
-import { UserModel } from "../../models/User";
 import { JC_Utils_Dates } from "@/app/Utils";
 import { sql } from "@vercel/postgres";
+import { UserModel } from "../../models/User";
 
 export class UserBusiness {
     // - --- - //

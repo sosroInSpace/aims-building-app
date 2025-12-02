@@ -31,9 +31,16 @@ export default function Page_ResetPassword() {
     // - INITIALISE - //
 
     useEffect(() => {
-        // Get User with this token
-        JC_Get<UserModel>(UserModel, UserModel.apiRoute_getByToken, { userToken: userToken }).then(user => {
-            if (!user || JC_Utils_Dates.minutesBetweenDates(user.ChangePasswordTokenDate!, new Date()) > 30) {
+        // Get User with this token (add cache-buster to prevent caching)
+        JC_Get<UserModel>(UserModel, UserModel.apiRoute_getByToken, { userToken: userToken, _t: Date.now() }).then(user => {
+            // Check if user exists and has a valid Id (JC_Get returns empty model if not found)
+            if (!user || !user.Id) {
+                setTokenValid(false);
+                return;
+            }
+
+            const tokenDate = user.ChangePasswordTokenDate;
+            if (!tokenDate || JC_Utils_Dates.minutesBetweenDates(tokenDate, new Date()) > 30) {
                 setTokenValid(false);
             } else {
                 setTokenValid(true);
